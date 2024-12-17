@@ -1,0 +1,164 @@
+version: 2.1
+orbs:
+  aws-cli: circleci/aws-cli@4.0.0
+
+
+executors:
+  arm-executor:
+    environment:
+      AWS_PAGER: ""
+      ENTERPRISE_NAME: IPD
+      GROUP_NAME: Cloud
+      SERVICE_NAME: EC2
+    machine:
+      image: ubuntu-2004:current
+#    resource_class: arm.medium
+    resource_class: arm.medium
+
+jobs:
+  deploy:
+    executor: arm-executor
+    environment:
+      CIRCLE_PIPELINE_NUM: << pipeline.number >>
+      DEPLOY_ENV: <<parameters.DEPLOY_ENV>>
+      RESOURCE_NAME: <<parameters.RESOURCE_NAME>>
+    parameters:
+      DEPLOY_ENV:
+        type: string
+        enum: [dev]
+      TEMPLATE_FILE_NAME:
+        type: string
+      RESOURCE_NAME:
+        type: string
+    steps:
+      - checkout
+      - run:
+          name: Install AWS cli ☁️ 📦         
+          command: |
+            chmod +x ./scripts/install_aws.sh
+            ./scripts/install_aws.sh <<parameters.DEPLOY_ENV>> <<pipeline.number>>
+      - aws-cli/setup:
+              profile_name: "OIDC-PROFILE"
+              role_session_name: "$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM"
+              role_arn: "arn:aws:iam::$ACCOUNT_ID:role/ipd-common-oidc-circle-role"            
+      - run: chmod +x ./scripts/*
+      - run:
+          name: Deploying <<parameters.RESOURCE_NAME>> 🎯
+          command: ./scripts/deploy.sh <<parameters.TEMPLATE_FILE_NAME>> <<parameters.RESOURCE_NAME>>
+          no_output_timeout: 40m
+
+workflows:
+  iac-compute:
+    jobs:
+      - approval:
+          name: Tech lead approvement dev 👓 👨‍💻
+          type: approval
+          filters:
+            branches:
+              only: IPD-8018
+
+#      - deploy:
+#          name: Deploy IAC KMS
+#          DEPLOY_ENV: dev
+#          TEMPLATE_FILE_NAME: seguridad/KMS-Keys.yaml
+#          RESOURCE_NAME: KMS
+#          requires:
+#            - Deploy IAC VPC
+#          filters:
+#            branches:
+#              only: IPD-8018
+#          context:
+#            - DSOtestSeg
+
+#      - deploy:
+#          name: Deploy IAC VPC
+#          DEPLOY_ENV: dev
+#          TEMPLATE_FILE_NAME: networking/VPC.yaml
+#          RESOURCE_NAME: VPC
+#          requires:
+#            - Tech lead approvement dev 👓 👨‍💻
+#          filters:
+#            branches:
+#              only: IPD-8018
+#          context:
+#            - DSOtestSeg
+#  
+#      - deploy:
+#          name: Deploy IAC EC2
+#          DEPLOY_ENV: dev
+#          TEMPLATE_FILE_NAME: maquina/EC2-Instance_AD.yaml
+#          RESOURCE_NAME: EC2
+#          requires:
+#            - Deploy IAC VPC
+#          filters:
+#            branches:
+#              only: IPD-8018
+#          context:
+#            - DSOtestSeg
+
+
+      - deploy:
+          name: Deploy IAC Iam
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: iam/BancoGeneral-PermissionSet-parte1.yaml
+          RESOURCE_NAME: IAM
+#          requires:
+#            - Deploy IAC EC2
+          filters:
+            branches:
+              only: IPD-8018
+          context:
+            - DSOtestSeg
+
+#      - deploy:
+#          name: Deploy IAC Iam-2
+#          DEPLOY_ENV: dev
+#          TEMPLATE_FILE_NAME: iam/BancoGeneral-PermissionSet-parte2.yaml
+#          RESOURCE_NAME: IAM
+#          requires:
+#            - Deploy IAC Iam
+#          filters:
+#            branches:
+#              only: IPD-8018
+#          context:
+#            - DSOtestSeg
+#
+#      - deploy:
+#          name: Deploy IAC Iam-3
+#          DEPLOY_ENV: dev
+#          TEMPLATE_FILE_NAME: iam/BancoGeneral-PermissionSet-parte3.yaml
+#          RESOURCE_NAME: IAM
+#          requires:
+#            - Deploy IAC Iam-2
+#          filters:
+#            branches:
+#              only: IPD-8018
+#          context:
+#            - DSOtestSeg
+#
+#      - deploy:
+#          name: Deploy IAC Iam-4
+#          DEPLOY_ENV: dev
+#          TEMPLATE_FILE_NAME: iam/BancoGeneral-PermissionSet-parte4.yaml
+#          RESOURCE_NAME: IAM
+#          requires:
+#            - Deploy IAC Iam-3
+#          filters:
+#            branches:
+#              only: IPD-8018
+#          context:
+#            - DSOtestSeg
+#
+#      - deploy:
+#          name: Deploy IAC Iam-5
+#          DEPLOY_ENV: dev
+#          TEMPLATE_FILE_NAME: iam/BancoGeneral-PermissionSet-parte5.yaml
+#          RESOURCE_NAME: IAM
+#          requires:
+#            - Deploy IAC Iam-4
+#          filters:
+#            branches:
+#              only: IPD-8018
+#          context:
+#            - DSOtestSeg
+

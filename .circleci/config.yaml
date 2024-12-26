@@ -1,0 +1,30 @@
+version: 2.1
+setup: true
+
+orbs:
+  continuation: circleci/continuation@0.2.0
+
+parameters:
+  account:
+    type: string
+    default: "default"
+
+jobs:
+  setup:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: Seleccionar Configuración Dinámica 🔄
+          command: |
+            if [ "<< pipeline.parameters.account >>" == "cuenta1" ]; then
+              echo "Continuando con config_cuenta1.yml"
+              circleci continuation continue --config .circleci/config_cuenta1.yml
+            elif [ "<< pipeline.parameters.account >>" == "cuenta2" ]; then
+              echo "Continuando con config_cuenta2.yml"
+              circleci continuation continue --config .circleci/config_cuenta2.yml
+            else
+              echo "Continuando con config_default.yml"
+              circleci continuation continue --config .circleci/config_default.yml
+            fi

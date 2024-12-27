@@ -66,3 +66,53 @@ jobs:
                 circleci continuation continue --config .circleci/config_default.yml
                 ;;
             esac
+-------------------------------------
+version: 2.1
+setup: true  # Indica que este es un archivo de configuración dinámica
+
+orbs:
+  continuation: circleci/continuation@0.2.0  # Orbe necesario para usar configuración dinámica
+
+parameters:
+  account:  # Parámetro para seleccionar la cuenta
+    type: string
+    default: "default"
+
+jobs:
+  placeholder:  # Trabajo temporal (dummy job)
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run: echo "Esperando configuración dinámica..."
+
+  setup:  # Job para seleccionar el archivo de configuración correcto
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: Seleccionar Configuración Dinámica 🔄
+          command: |
+            case "<< pipeline.parameters.account >>" in
+              cuenta1)
+                echo "Continuando con config_cuenta1.yml"
+                circleci continuation continue --config .circleci/config_cuenta1.yml
+                ;;
+              cuenta2)
+                echo "Continuando con config_cuenta2.yml"
+                circleci continuation continue --config .circleci/config_cuenta2.yml
+                ;;
+              *)
+                echo "Continuando con config_default.yml"
+                circleci continuation continue --config .circleci/config_default.yml
+                ;;
+            esac
+
+workflows:
+  setup-workflow:
+    jobs:
+      - placeholder  # Ejecuta primero el placeholder
+      - setup:  # Luego ejecuta el job que selecciona el config
+          requires:
+            - placeholder  # setup solo se ejecuta después de que finalice el placeholder
+

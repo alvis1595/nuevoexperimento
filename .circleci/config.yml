@@ -34,5 +34,5 @@ jobs:
           name: Validar y Ejecutar Pipeline Dinámico
           command: |
             echo "Ejecutando el pipeline: << parameters.pipeline_config >>"
-            circleci-config validate .circleci/<< parameters.pipeline_config >>
+            circleci config validate .circleci/<< parameters.pipeline_config >>
             continuation continue -c .circleci/<< parameters.pipeline_config >>

@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'VPC con 2 Subnets Públicas, 2 Subnets Privadas, Internet Gateway y NAT Gateway'
+
+Resources:
+  # VPC
+  MiVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: "{{resolve:ssm:/miapp/vpc/cidr}}"
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: MiVPC
+
+Outputs:
+  VPCId:
+    Description: 'VPC Id'
+    Value: !Ref MiVPC
+    Export:
+      Name: MiVPC

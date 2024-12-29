@@ -18,8 +18,8 @@ readonly NC='\033[0m' # No Color
 # lab = ohio
 # prod = oregon
 readonly envs='{
-    "dev":"us-east-1",
-    "prodb": "sa-east-1"
+    "dev":"us-east-2",
+    "prodb": "us-west-2"
 }'
 
 # Checking if aws cli is installed
@@ -39,8 +39,8 @@ echo -e "$INFO""Setting aws Environment ⚙️ 🔧""$NC"
 env=$(echo "$envs" | jq -r ".$DEPLOY_ENV")
 readonly env
 
-if [[ "$env" = "null" ]]; then
-    echo -e "$RED""Not valid Yappy aws env, please refer to your wiki 📖"
+if [[ "$env" = "null" ]];i then
+    echo -e "$RED""not  📖"
     exit 1
 fi
 

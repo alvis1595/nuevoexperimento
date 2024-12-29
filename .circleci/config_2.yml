@@ -1,0 +1,64 @@
+version: 2.1
+
+executors:
+  arm-executor:
+    environment:
+      AWS_PAGER: ""
+      ENTERPRISE_NAME: nuevo
+      GROUP_NAME: ipic
+      SERVICE_NAME: ecs
+    machine:
+      image: ubuntu-2004:current
+#    resource_class: arm.medium
+    resource_class: arm.medium
+
+jobs:
+  deploy:
+    executor: arm-executor
+    environment:
+      CIRCLE_PIPELINE_NUM: << pipeline.number >>
+      DEPLOY_ENV: <<parameters.DEPLOY_ENV>>
+      RESOURCE_NAME: <<parameters.RESOURCE_NAME>>
+    parameters:
+      DEPLOY_ENV:
+        type: string
+        enum: [dev]
+      TEMPLATE_FILE_NAME:
+        type: string
+      RESOURCE_NAME:
+        type: string
+    steps:
+      - checkout
+      - run:
+          name: Install AWS cli ☁️ 📦
+          command: |
+            chmod +x ./scripts/install_aws.sh
+            ./scripts/install_aws.sh <<parameters.DEPLOY_ENV>> <<pipeline.number>>
+      - run: chmod +x ./scripts/*
+      - run:
+          name: Deploying <<parameters.RESOURCE_NAME>> 🎯
+          command: ./scripts/deploy.sh <<parameters.TEMPLATE_FILE_NAME>> <<parameters.RESOURCE_NAME>>
+          no_output_timeout: 40m
+
+workflows:
+  iac-compute:
+    jobs:
+      - approval:
+          name: Tech lead approvement prod 👓 👨‍💻
+          type: approval
+          filters:
+            branches:
+              only: main
+
+      - deploy:
+          name: Deploy IAC VPC
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: vpc.yml
+          RESOURCE_NAME: vpc
+          requires:
+            - Tech lead approvement prod 👓 👨‍💻
+          filters:
+            branches:
+              only: main
+          context:
+            - Ronaldo

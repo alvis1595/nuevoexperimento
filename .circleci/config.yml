@@ -19,24 +19,31 @@ workflows:
 jobs:
   trigger_pipeline:
     docker:
-      - image: cimg/base:stable  # Imagen base ligera con herramientas CLI
+      - image: cimg/base:stable  # Imagen base con CLI básica
     parameters:
       pipeline_config:
         type: string
     steps:
-      - checkout  # Clona el código del repositorio
+      - checkout
       - run:
           name: Verificar Archivos en .circleci/
           command: |
-            echo "Verificando archivos en .circleci/"
+            echo "🔍 Verificando archivos en .circleci/"
             ls -la .circleci/
       - run:
           name: Validar y Continuar con Configuración Dinámica
           command: |
             CONFIG_FILE=".circleci/<< parameters.pipeline_config >>"
+            
+            echo "🔧 Configuración seleccionada: $CONFIG_FILE"
+            
             if [ -f "$CONFIG_FILE" ]; then
               echo "✅ Archivo encontrado: $CONFIG_FILE"
-              circleci config validate "$CONFIG_FILE"
+              
+              # Elimina la validación manual
+              # circleci config validate "$CONFIG_FILE"
+              
+              # Usa el orb continuation directamente
               circleci continuation continue -c "$CONFIG_FILE"
             else
               echo "❌ ERROR: Archivo $CONFIG_FILE no encontrado"

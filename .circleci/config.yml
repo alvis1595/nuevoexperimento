@@ -1,9 +1,9 @@
 version: 2.1
 
-setup: true
+setup: true  # Pipeline de setup dinámico
 
 orbs:
-  continuation: circleci/continuation@0.1.2  # Usa el orb correcto
+  continuation: circleci/continuation@0.1.2  # Orb oficial para pipelines dinámicos
 
 parameters:
   pipeline_config:
@@ -13,8 +13,8 @@ parameters:
 workflows:
   setup:
     jobs:
-      - continuation/continue:
-          configuration_path: .circleci/<< pipeline.parameters.pipeline_config >>
+      - trigger_pipeline:  # Ejecuta el checkout y validación
+          pipeline_config: << pipeline.parameters.pipeline_config >>
 jobs:
   trigger_pipeline:
     docker:
@@ -23,17 +23,17 @@ jobs:
       pipeline_config:
         type: string
     steps:
-      - checkout
+      - checkout  # Asegura que el código esté disponible
       - run:
           name: Verificar Archivos en .circleci/
           command: |
-            echo "🔍 Verificando archivos en .circleci/"
+            echo "🔍 Listando archivos en .circleci/"
             ls -la .circleci/
       - run:
-          name: Validar Configuración
+          name: Validar Archivo de Configuración
           command: |
             CONFIG_FILE=".circleci/<< parameters.pipeline_config >>"
-            
+            echo "🔧 Configuración seleccionada: $CONFIG_FILE"
             if [ -f "$CONFIG_FILE" ]; then
               echo "✅ Archivo encontrado: $CONFIG_FILE"
               circleci config validate "$CONFIG_FILE"
@@ -41,5 +41,5 @@ jobs:
               echo "❌ ERROR: Archivo $CONFIG_FILE no encontrado"
               exit 1
             fi
-      - continuation/continue:
+      - continuation/continue:  # Continuar el pipeline dinámico
           configuration_path: .circleci/<< parameters.pipeline_config >>

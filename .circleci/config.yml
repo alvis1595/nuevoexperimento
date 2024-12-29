@@ -1,25 +1,24 @@
 version: 2.1
 
-setup: true  # Habilita configuración dinámica
+setup: true
 
 orbs:
-  continuation: circleci/continuation@0.1.2  # Orb oficial de CircleCI para pipelines dinámicos
+  continuation: circleci/continuation@0.1.2  # Usa el orb correcto
 
 parameters:
   pipeline_config:
     type: string
-    default: config_1.yml  # Usa config_1.yml como predeterminado
+    default: config_1.yml
 
 workflows:
   setup:
     jobs:
-      - trigger_pipeline:  # Job que maneja la lógica y validación
-          pipeline_config: << pipeline.parameters.pipeline_config >>
-
+      - continuation/continue:
+          configuration_path: .circleci/<< pipeline.parameters.pipeline_config >>
 jobs:
   trigger_pipeline:
     docker:
-      - image: cimg/base:stable  # Imagen base con CLI básica
+      - image: cimg/base:stable
     parameters:
       pipeline_config:
         type: string
@@ -31,21 +30,16 @@ jobs:
             echo "🔍 Verificando archivos en .circleci/"
             ls -la .circleci/
       - run:
-          name: Validar y Continuar con Configuración Dinámica
+          name: Validar Configuración
           command: |
             CONFIG_FILE=".circleci/<< parameters.pipeline_config >>"
             
-            echo "🔧 Configuración seleccionada: $CONFIG_FILE"
-            
             if [ -f "$CONFIG_FILE" ]; then
               echo "✅ Archivo encontrado: $CONFIG_FILE"
-              
-              # Elimina la validación manual
-              # circleci config validate "$CONFIG_FILE"
-              
-              # Usa el orb continuation directamente
-              circleci continuation continue -c "$CONFIG_FILE"
+              circleci config validate "$CONFIG_FILE"
             else
               echo "❌ ERROR: Archivo $CONFIG_FILE no encontrado"
               exit 1
             fi
+      - continuation/continue:
+          configuration_path: .circleci/<< parameters.pipeline_config >>

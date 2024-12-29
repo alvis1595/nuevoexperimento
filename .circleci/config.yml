@@ -30,15 +30,15 @@ jobs:
             echo "🔍 Listando archivos en .circleci/"
             ls -la .circleci/
       - run:
-          name: Validar Configuración y Continuar
+          name: Validar Configuración
           command: |
             CONFIG_FILE=".circleci/<< parameters.pipeline_config >>"
             echo "🔧 Configuración seleccionada: $CONFIG_FILE"
             if [ -f "$CONFIG_FILE" ]; then
               echo "✅ Archivo encontrado: $CONFIG_FILE"
-              # Elimina la validación manual
-              circleci continuation continue -c "$CONFIG_FILE"
             else
               echo "❌ ERROR: Archivo $CONFIG_FILE no encontrado"
               exit 1
             fi
+      - continuation/continue:
+          configuration_path: .circleci/<< parameters.pipeline_config >>

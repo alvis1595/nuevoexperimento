@@ -48,7 +48,7 @@ workflows:
           type: approval
           filters:
             branches:
-              only: main
+              only: alvis
 
       - deploy:
           name: Deploy IAC VPC
@@ -59,6 +59,6 @@ workflows:
             - Tech lead approvement prod 👓 👨‍💻
           filters:
             branches:
-              only: main
+              only: alvis
           context:
             - Ronaldo

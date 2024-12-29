@@ -13,7 +13,7 @@ workflows:
           pipeline_config: config1.yml  # Default a config1.yml
           filters:
             branches:
-              only: main
+              only: alvis
 
 jobs:
   trigger_pipeline:

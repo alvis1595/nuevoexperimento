@@ -31,6 +31,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Verificar Archivos Descargados
+          command: ls -la .circleci/
+      - run:
           name: Instalar CircleCI CLI
           command: |
             sudo apt update

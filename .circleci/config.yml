@@ -1,42 +1,44 @@
 version: 2.1
 
-setup: true  # Pipeline dinámico habilitado
+setup: true  # Habilita configuración dinámica
 
 orbs:
-  continuation: circleci/continuation@0.1.2  # Orb de continuación
+  continuation: circleci/continuation@0.1.2  # Orb oficial de CircleCI para pipelines dinámicos
 
 parameters:
   pipeline_config:
     type: string
-    default: config_1.yml  # Archivo por defecto
+    default: config_1.yml  # Usa config_1.yml como predeterminado
 
 workflows:
   setup:
     jobs:
-      - continuation/continue:
-          configuration_path: .circleci/<< pipeline.parameters.pipeline_config >>
+      - trigger_pipeline:  # Job que maneja la lógica y validación
+          pipeline_config: << pipeline.parameters.pipeline_config >>
 
 jobs:
   trigger_pipeline:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/base:stable  # Imagen base ligera con herramientas CLI
     parameters:
       pipeline_config:
         type: string
-        default: config_1.yml
     steps:
-      - checkout  # Descarga el código del repositorio
+      - checkout  # Clona el código del repositorio
       - run:
-          name: Verificar Archivos
-          command: ls -la .circleci/  # Muestra archivos en .circleci
-      - run:
-          name: Validar Configuración
+          name: Verificar Archivos en .circleci/
           command: |
-            if [ -f ".circleci/<< parameters.pipeline_config >>" ]; then
-              echo "Archivo encontrado: .circleci/<< parameters.pipeline_config >>"
-              circleci config validate .circleci/<< parameters.pipeline_config >>
-              circleci continuation continue -c .circleci/<< parameters.pipeline_config >>
+            echo "Verificando archivos en .circleci/"
+            ls -la .circleci/
+      - run:
+          name: Validar y Continuar con Configuración Dinámica
+          command: |
+            CONFIG_FILE=".circleci/<< parameters.pipeline_config >>"
+            if [ -f "$CONFIG_FILE" ]; then
+              echo "✅ Archivo encontrado: $CONFIG_FILE"
+              circleci config validate "$CONFIG_FILE"
+              circleci continuation continue -c "$CONFIG_FILE"
             else
-              echo "ERROR: Archivo .circleci/<< parameters.pipeline_config >> no encontrado"
+              echo "❌ ERROR: Archivo $CONFIG_FILE no encontrado"
               exit 1
             fi

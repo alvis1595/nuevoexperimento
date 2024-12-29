@@ -31,6 +31,12 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Instalar CircleCI CLI
+          command: |
+            sudo apt update
+            sudo apt install -y curl
+            curl -fLSs https://circle.ci/cli | sudo bash
+      - run:
           name: Validar y Ejecutar Pipeline Dinámico
           command: |
             echo "Ejecutando el pipeline: << parameters.pipeline_config >>"

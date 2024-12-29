@@ -1,16 +1,21 @@
 version: 2.1
 
-setup: true  # Habilita pipelines de configuración dinámica
+setup: true  # Habilita pipelines dinámicos
 
 orbs:
-  continuation: circleci/continuation@0.1.2  # Orb para continuar pipelines
+  continuation: circleci/continuation@0.1.2  # Orb para continuar pipelines dinámicos
+
+parameters:
+  pipeline_config:
+    type: string
+    default: config1.yml  # Valor por defecto (config1)
 
 workflows:
   setup:
     jobs:
       - trigger_pipeline:
           name: Seleccionar y Desplegar Pipeline
-          pipeline_config: config1.yml  # Default a config1.yml
+          pipeline_config: << pipeline.parameters.pipeline_config >>
           filters:
             branches:
               only: main
@@ -18,7 +23,7 @@ workflows:
 jobs:
   trigger_pipeline:
     docker:
-      - image: cimg/base:stable  # Usa una imagen base de CircleCI
+      - image: cimg/base:stable  # Imagen CircleCI con herramientas CLI
     parameters:
       pipeline_config:
         type: string
@@ -26,7 +31,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Ejecutar Pipeline Dinámico
+          name: Validar y Ejecutar Pipeline Dinámico
           command: |
             echo "Ejecutando el pipeline: << parameters.pipeline_config >>"
             circleci-config validate .circleci/<< parameters.pipeline_config >>

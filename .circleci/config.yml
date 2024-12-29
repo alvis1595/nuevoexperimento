@@ -40,6 +40,11 @@ jobs:
             sudo apt install -y curl
             curl -fLSs https://circle.ci/cli | sudo bash
       - run:
+          name: Instalar Continuation CLI
+          command: |
+            sudo curl -o /usr/local/bin/continuation https://circleci-public.s3.amazonaws.com/continuation/linux_amd64
+            sudo chmod +x /usr/local/bin/continuation
+      - run:
           name: Validar y Ejecutar Pipeline Dinámico
           command: |
             echo "Ejecutando el pipeline: << parameters.pipeline_config >>"

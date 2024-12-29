@@ -3,16 +3,15 @@ version: 2.1
 setup: true  # Habilita configuración dinámica
 
 orbs:
-  continuation: circleci/continuation@0.1.2  # Usa el orb oficial de continuation
+  continuation: circleci/continuation@0.1.2  # Orb correcto
 
 parameters:
   pipeline_config:
     type: string
-    default: config_1.yml  # Configuración predeterminada
+    default: config1.yml  # Configuración predeterminada
 
 workflows:
   setup:
     jobs:
-      - continuation/setup:
-          name: Seleccionar Pipeline
+      - continuation/continue:  # Job correcto
           configuration_path: .circleci/<< pipeline.parameters.pipeline_config >>

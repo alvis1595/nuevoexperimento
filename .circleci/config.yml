@@ -1,17 +1,42 @@
 version: 2.1
 
-setup: true  # Habilita configuración dinámica
+setup: true  # Pipeline dinámico habilitado
 
 orbs:
-  continuation: circleci/continuation@0.1.2  # Orb correcto
+  continuation: circleci/continuation@0.1.2  # Orb de continuación
 
 parameters:
   pipeline_config:
     type: string
-    default: config_1.yml  # Configuración predeterminada
+    default: config_1.yml  # Archivo por defecto
 
 workflows:
   setup:
     jobs:
-      - continuation/continue:  # Job correcto
+      - continuation/continue:
           configuration_path: .circleci/<< pipeline.parameters.pipeline_config >>
+
+jobs:
+  trigger_pipeline:
+    docker:
+      - image: cimg/base:stable
+    parameters:
+      pipeline_config:
+        type: string
+        default: config_1.yml
+    steps:
+      - checkout  # Descarga el código del repositorio
+      - run:
+          name: Verificar Archivos
+          command: ls -la .circleci/  # Muestra archivos en .circleci
+      - run:
+          name: Validar Configuración
+          command: |
+            if [ -f ".circleci/<< parameters.pipeline_config >>" ]; then
+              echo "Archivo encontrado: .circleci/<< parameters.pipeline_config >>"
+              circleci config validate .circleci/<< parameters.pipeline_config >>
+              circleci continuation continue -c .circleci/<< parameters.pipeline_config >>
+            else
+              echo "ERROR: Archivo .circleci/<< parameters.pipeline_config >> no encontrado"
+              exit 1
+            fi

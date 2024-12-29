@@ -23,23 +23,22 @@ jobs:
       pipeline_config:
         type: string
     steps:
-      - checkout  # Asegura que el código esté disponible
+      - checkout
       - run:
           name: Verificar Archivos en .circleci/
           command: |
             echo "🔍 Listando archivos en .circleci/"
             ls -la .circleci/
       - run:
-          name: Validar Archivo de Configuración
+          name: Validar Configuración y Continuar
           command: |
             CONFIG_FILE=".circleci/<< parameters.pipeline_config >>"
             echo "🔧 Configuración seleccionada: $CONFIG_FILE"
             if [ -f "$CONFIG_FILE" ]; then
               echo "✅ Archivo encontrado: $CONFIG_FILE"
-              circleci config validate "$CONFIG_FILE"
+              # Elimina la validación manual
+              circleci continuation continue -c "$CONFIG_FILE"
             else
               echo "❌ ERROR: Archivo $CONFIG_FILE no encontrado"
               exit 1
             fi
-      - continuation/continue:  # Continuar el pipeline dinámico
-          configuration_path: .circleci/<< parameters.pipeline_config >>

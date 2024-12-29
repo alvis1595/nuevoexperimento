@@ -10,7 +10,7 @@ workflows:
     jobs:
       - trigger_pipeline:
           name: Seleccionar Pipeline
-          pipeline_config: config1.yml  # Default a config1.yml
+          pipeline_config: config1.yml  # Valor por defecto
           filters:
             branches:
               only: main
@@ -22,11 +22,11 @@ jobs:
     parameters:
       pipeline_config:
         type: string
-        default: config1.yml  # Valor por defecto
+        default: config1.yml
     steps:
       - checkout
       - run:
           name: Ejecutar Pipeline Seleccionado
           command: |
-            echo "Ejecutando el pipeline: << pipeline.parameters.pipeline_config >>"
-            circleci pipeline trigger -c .circleci/<< pipeline.parameters.pipeline_config >>
+            echo "Ejecutando el pipeline: << parameters.pipeline_config >>"
+            circleci pipeline trigger -c .circleci/<< parameters.pipeline_config >>

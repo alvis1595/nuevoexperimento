@@ -1,52 +1,18 @@
 version: 2.1
 
-setup: true  # Habilita pipelines dinámicos
+setup: true  # Habilita configuración dinámica
 
 orbs:
-  continuation: circleci/continuation@0.1.2  # Orb para continuar pipelines dinámicos
+  continuation: circleci/continuation@0.1.2  # Usa el orb oficial de continuation
 
 parameters:
   pipeline_config:
     type: string
-    default: config_1.yml  # Valor por defecto (config1)
+    default: config1.yml  # Configuración predeterminada
 
 workflows:
   setup:
     jobs:
-      - trigger_pipeline:
-          name: Seleccionar y Desplegar Pipeline
-          pipeline_config: << pipeline.parameters.pipeline_config >>
-          filters:
-            branches:
-              only: main
-
-jobs:
-  trigger_pipeline:
-    docker:
-      - image: cimg/base:stable  # Imagen CircleCI con herramientas CLI
-    parameters:
-      pipeline_config:
-        type: string
-        default: config_1.yml
-    steps:
-      - checkout
-      - run:
-          name: Verificar Archivos Descargados
-          command: ls -la .circleci/
-      - run:
-          name: Instalar CircleCI CLI
-          command: |
-            sudo apt update
-            sudo apt install -y curl
-            curl -fLSs https://circle.ci/cli | sudo bash
-      - run:
-          name: Instalar Continuation CLI
-          command: |
-            sudo curl -o /usr/local/bin/continuation https://circleci-public.s3.amazonaws.com/continuation/v0.1.2/linux_amd64
-            sudo chmod +x /usr/local/bin/continuation
-      - run:
-          name: Validar y Ejecutar Pipeline Dinámico
-          command: |
-            echo "Ejecutando el pipeline: << parameters.pipeline_config >>"
-            circleci config validate .circleci/<< parameters.pipeline_config >>
-            continuation continue -c .circleci/<< parameters.pipeline_config >>
+      - continuation/setup:
+          name: Seleccionar Pipeline
+          configuration_path: .circleci/<< pipeline.parameters.pipeline_config >>

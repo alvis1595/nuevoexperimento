@@ -10,7 +10,7 @@ workflows:
     jobs:
       - trigger_pipeline:
           name: Seleccionar Pipeline
-          pipeline_config: config1.yml  # Default a config1.yml
+          pipeline_config: config1.yml  # Default a config1.yml nueba conf
           filters:
             branches:
               only: alvis

@@ -1,12 +1,17 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'VPC con 2 Subnets Públicas, 2 Subnets Privadas, Internet Gateway y NAT Gateway'
 
+parametParameters:
+  DBClusterIdentifier:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: 192.168.54.0/24
 Resources:
   # VPC
   MiVPC:
     Type: 'AWS::EC2::VPC'
     Properties:
-      CidrBlock: "{{resolve:ssm:/miapp/vpc/cidr}}"
+      CidrBlock: !Ref DBClusterIdentifier
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:

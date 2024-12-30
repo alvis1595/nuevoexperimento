@@ -53,7 +53,7 @@ workflows:
       - deploy:
           name: Deploy IAC VPC
           DEPLOY_ENV: dev
-          TEMPLATE_FILE_NAME: vpc.yml
+          TEMPLATE_FILE_NAME: template/vpc.yml
           RESOURCE_NAME: vpc
           requires:
             - Tech lead approvement prod 👓 👨‍💻

@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'VPC con 2 Subnets Públicas, 2 Subnets Privadas, Internet Gateway y NAT Gateway'
 
-parametParameters:
+Parameters:
   DBClusterIdentifier:
     Description: An environment name that will be prefixed to resource names
     Type: String

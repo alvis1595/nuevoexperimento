@@ -39,7 +39,7 @@ echo -e "$INFO""Setting aws Environment ⚙️ 🔧""$NC"
 env=$(echo "$envs" | jq -r ".$DEPLOY_ENV")
 readonly env
 
-if [[ "$env" = "null" ]];i then
+if [[ "$env" = "null" ]]; then
     echo -e "$RED""not  📖"
     exit 1
 fi

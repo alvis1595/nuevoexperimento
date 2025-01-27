@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Task Definition for Ubuntu Linux (ARM) on ECS Fargate in Oregon'
+
+Resources:
+  # IAM Role for ECS Task Execution
+  ECSTaskExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: ECSFargateTaskExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:GetAuthorizationToken
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource: '*'
+
+  # ECS Task Definition
+  ECSTaskDefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    Properties:
+      Family: 'UbuntuTask'
+      Cpu: '4096' # 4 vCPU (para ARM)
+      Memory: '16384' # 16 GB
+      EphemeralStorage:
+        SizeInGiB: 40 # Almacenamiento efímero
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: ARM64 # Arquitectura ARM
+      ContainerDefinitions:
+        - Name: ubuntu
+          Image: 'ubuntu:latest' # Imagen pública de Ubuntu desde Docker Hub
+          Essential: true
+          Command:
+            - sleep
+            - "3600" # Mantiene el contenedor activo por 1 hora
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: '/ecs/ubuntu'
+              awslogs-stream-prefix: 'ubuntu'
+              awslogs-region: !Ref 'AWS::Region'
+
+Outputs:
+  TaskDefinitionArn:
+    Description: 'ARN de la definición de tarea de ECS'
+    Value: !Ref ECSTaskDefinition

@@ -1,0 +1,153 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy an Ubuntu Service on AWS Fargate with ALB in a private subnet.
+
+Resources:
+  # Target Group
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: ubuntu-tg
+      Port: 80 # Cambiado al puerto 80 (puerto por defecto para HTTP)
+      Protocol: HTTP
+      TargetType: ip
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      VpcId: !ImportValue VPCEcsId
+
+  # ALB Listener
+  AlbListener:
+    DependsOn:
+      - TargetGroup
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !ImportValue alb-seeker-arn
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: "{{resolve:ssm:/config/infra/devops/alb/certificate}}"
+
+  # ECS Service
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !ImportValue ECSClusterNameSeeker
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
+      DesiredCount: 1
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 60
+      LoadBalancers:
+        - ContainerName: ubuntu
+          ContainerPort: 80
+          TargetGroupArn: !Ref TargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups: 
+            - !ImportValue ECSseekerSecurityGroupID
+          Subnets:
+            - !ImportValue ECSSeekerPrivateSubnet1ID
+            - !ImportValue ECSSeekerPrivateSubnet2ID
+
+      PlatformVersion: 1.4.0
+      TaskDefinition: !ImportValue UbuntuTaskDefinitionArn # ARN exportado de la definición de tarea
+      PropagateTags: SERVICE
+      Tags:
+        - Key: Name
+          Value: ubuntus-service
+
+Outputs:
+  ECSServiceName:
+    Description: 'Nombre del servicio ECS desplegado'
+    Value: !Ref ECSService
+
+  TargetGroupArn:
+    Description: 'ARN del Target Group'
+    Value: !Ref TargetGroup
+
+  AlbListenerArn:
+    Description: 'ARN del Listener del ALB'
+    Value: !Ref AlbListener
+
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Task Definition for Ubuntu Linux (ARM) on ECS Fargate in Oregon'
+
+Parameters:
+  Imagencontainer:
+    Default: '258840583819.dkr.ecr.us-west-2.amazonaws.com/seeker:latest'
+    Type: String
+    Description: Used to resolved images of container.    
+
+Resources:
+  # IAM Role for ECS Task Execution
+  ECSTaskExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: ECSFargateTaskExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:GetAuthorizationToken
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource: '*'
+
+  # ECS Task Definition
+  ECSTaskDefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    Properties:
+      Family: 'UbuntuTask'
+      Cpu: '4096' # 4 vCPU (para ARM)
+      Memory: '16384' # 16 GB
+      EphemeralStorage:
+        SizeInGiB: 40 # Almacenamiento efímero
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: ARM64 # Arquitectura ARM
+      ContainerDefinitions:
+        - Name: ubuntu
+          Image: !Ref Imagencontainer # Imagen pública de Ubuntu desde Docker Hub
+          Essential: true
+          Command:
+            - sleep
+            - "3600" # activo por 1 hora
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: '/ecs/ubuntu'
+              awslogs-stream-prefix: 'ubuntu'
+              awslogs-region: !Ref 'AWS::Region'
+
+Outputs:
+  TaskDefinitionArn:
+    Description: 'ARN de la definición de tarea de ECS'
+    Value: !Ref ECSTaskDefinition
+    Export:
+      Name: UbuntuTaskDefinitionArn
+
+
+
+    

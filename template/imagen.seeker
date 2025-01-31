@@ -1,0 +1,37 @@
+# Imagen
+FROM bgxpa-imgprod.jfrog.io/ubuntu:20.04
+
+# usuario a usar
+USER root
+
+# Actualizar 
+RUN apt-get clean && apt-get update
+
+# Instalar dependencias en ubuntu
+RUN apt-get install -y locales fontconfig
+RUN apt-get install iputils-ping -y
+RUN apt-get install netcat -y
+
+# Generar  en_US.UTF-8
+RUN locale-gen en_US.UTF-8
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8
+RUN update-locale LANG=en_US.UTF-8
+
+# Crear un usuario ya que no puede usar root
+RUN useradd -m seeker
+
+# Brindamos la shell bash al usuario
+RUN chsh -s /bin/bash seeker
+
+# Cambiar seeker
+USER seeker
+WORKDIR /home/seeker
+
+# Copiar  arqchivo al home de seeker
+COPY seeker-server-linux64-2025.1.0.sh /home/seeker/
+
+# Ejecutamos
+RUN sh ./seeker-server-linux64-2025.1.0.sh accept-license=agree install-dir=/home/seeker server-http-port=8080 server-https-port=8443 external-database=true database-host=10.1.52.32 database-port=25432 database-name=seekerdb database-user=seeker database-password=1595
+
+# Comando para iniciar el servicio
+CMD ["/home/seeker/install/sk_ctl", "start"]

@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy an Ubuntu Service on AWS Fargate with ALB in a private subnet.
+
+Resources:
+  # Target Group
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: ubuntu-tg
+      Port: 9000
+      Protocol: HTTP
+      TargetType: ip
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      VpcId: !ImportValue VPCEcsId
+
+  # ALB Listener
+  AlbListener:
+    DependsOn:
+      - TargetGroup
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !ImportValue alb-seeker-arn
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: "{{resolve:ssm:/config/infra/devops/alb/certificate}}"
+
+  # ECS Service
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !ImportValue ECSClusterNameSeeker
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
+      DesiredCount: 1
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 60
+      LoadBalancers:
+        - ContainerName: ubuntu
+          ContainerPort: 9000
+          TargetGroupArn: !Ref TargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups: 
+            - !ImportValue ECSseekerSecurityGroupID
+          Subnets:
+            - !ImportValue ECSSeekerPrivateSubnet1ID
+            - !ImportValue ECSSeekerPrivateSubnet2ID
+
+      PlatformVersion: 1.4.0
+      TaskDefinition: !ImportValue UbuntuTaskDefinitionArn # ARN exportado de la definición de tarea
+      PropagateTags: SERVICE
+      Tags:
+        - Key: Name
+          Value: ubuntus-service
+
+Outputs:
+  ECSServiceName:
+    Description: 'Nombre del servicio ECS desplegado'
+    Value: !Ref ECSService
+
+  TargetGroupArn:
+    Description: 'ARN del Target Group'
+    Value: !Ref TargetGroup
+
+  AlbListenerArn:
+    Description: 'ARN del Listener del ALB'
+    Value: !Ref AlbListener

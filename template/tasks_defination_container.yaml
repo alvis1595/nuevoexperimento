@@ -165,3 +165,91 @@ Outputs:
     Value: !Ref ECSTaskDefinition
     Export:
       Name: UbuntuTaskDefinitionArn
+
+
+---------------------------------------------------------------------------------------------------
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Task Definition for Ubuntu Linux (ARM) on ECS Fargate with seeker initialization.'
+
+Parameters:
+  Imagencontainer:
+    Default: '258840583819.dkr.ecr.us-west-2.amazonaws.com/seeker:3.1'
+    Type: String
+    Description: Used to resolve images of container.    
+
+Resources:
+  # IAM Role for ECS Task Execution
+  ECSTaskExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: ECSFargateTaskExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:GetAuthorizationToken
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource: '*'
+
+  # ECS Task Definition
+  ECSTaskDefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    Properties:
+      Family: 'UbuntuTask'
+      Cpu: '4096'
+      Memory: '16384'
+      EphemeralStorage:
+        SizeInGiB: 40
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      ContainerDefinitions:
+        - Name: ubuntu
+          Image: !Ref Imagencontainer
+          Essential: true
+          Command:
+            - /bin/bash
+            - "-c"
+            - |
+              set -e
+              echo "Starting seeker setup..."
+              sh ./seekerdeploy/seeker-server-linux64-2025.1.0.sh accept-license=agree install-dir=/home/seeker server-http-port=8080 server-https-port=8443
+              /seekerdeploy/install/sk_ctl start
+              tail -f /dev/null
+          PortMappings:
+            - ContainerPort: 8080
+              Protocol: tcp
+            - ContainerPort: 8443
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: '/ecs/logs-seeker'
+              awslogs-stream-prefix: 'logs-seeker'
+              awslogs-region: !Ref 'AWS::Region'
+
+Outputs:
+  TaskDefinitionArn:
+    Description: 'ARN de la definición de tarea de ECS'
+    Value: !Ref ECSTaskDefinition
+    Export:
+      Name: UbuntuTaskDefinitionArn
+      

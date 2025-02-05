@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  ECS Service for Seeker Server connected to the ALB.
+
+Resources:
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !ImportValue ECSClusterNameSeeker
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
+      DesiredCount: 1
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 60
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !ImportValue ECSseekerSecurityGroupID
+          Subnets:
+            - !ImportValue ECSSeekerPrivateSubnet1ID
+            - !ImportValue ECSSeekerPrivateSubnet2ID
+      LoadBalancers:
+        - ContainerName: ubuntu
+          ContainerPort: 8080
+          TargetGroupArn: !ImportValue seeker-target-group-arn
+      PlatformVersion: 1.4.0
+      TaskDefinition: !ImportValue UbuntuTaskDefinitionArn
+      PropagateTags: SERVICE
+      Tags:
+        - Key: Name
+          Value: seeker-service
+
+Outputs:
+  ECSServiceName:
+    Description: 'Nombre del servicio ECS desplegado'
+    Value: !Ref ECSService

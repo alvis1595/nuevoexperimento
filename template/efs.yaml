@@ -1,0 +1,96 @@
+Resources:
+  # EFS File System
+  EFSFileSystem:
+    Type: 'AWS::EFS::FileSystem'
+    Properties:
+      Encrypted: true
+      BackupPolicy:
+        Status: ENABLED
+
+  # Access Point for Seeker Data
+  EFSAccessPointSeeker:
+    Type: 'AWS::EFS::AccessPoint'
+    Properties:
+      FileSystemId: !Ref EFSFileSystem
+      RootDirectory:
+        Path: "/seeker"
+        CreationInfo:
+          OwnerUid: "1000"
+          OwnerGid: "1000"
+          Permissions: "0755"
+
+Outputs:
+  EFSFileSystemId:
+    Description: "El ID del sistema de archivos EFS"
+    Value: !Ref EFSFileSystem
+    Export:
+      Name: SeekerEFSFileSystemId
+
+  EFSAccessPointSeekerId:
+    Description: "El ID del punto de acceso de EFS para Seeker"
+    Value: !Ref EFSAccessPointSeeker
+    Export:
+      Name: SeekerEFSAccessPointId
+---------------------------------------------------------------------------------------------------
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'EFS File System for Seeker Server'
+
+Resources:
+  # EFS File System
+  EFSFileSystem:
+    Type: 'AWS::EFS::FileSystem'
+    Properties:
+      BackupPolicy:
+        Status: ENABLED
+      FileSystemTags:
+        - Key: Name
+          Value: efs-seeker
+      Encrypted: true
+
+  # Access Point for Seeker Server
+  EFSAccessPointSeeker:
+    Type: 'AWS::EFS::AccessPoint'
+    Properties:
+      FileSystemId: !Ref EFSFileSystem
+      PosixUser:
+        Uid: "1000"  # Cambia esto si Seeker utiliza otro UID dentro del contenedor
+        Gid: "1000"  # Cambia esto si Seeker utiliza otro GID dentro del contenedor
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "1000"
+          OwnerUid: "1000"
+          Permissions: "0755"
+        Path: "/seeker"
+      AccessPointTags:
+        - Key: Name
+          Value: seeker_data
+
+  # Mount Targets
+  EFSMountTargetPrivateSubnet1:
+    Type: 'AWS::EFS::MountTarget'
+    Properties:
+      FileSystemId: !Ref EFSFileSystem
+      SubnetId: !ImportValue ECSPrivateSubnet1ID
+      SecurityGroups:
+        - !ImportValue EFSSecurityGroupID
+
+  EFSMountTargetPrivateSubnet2:
+    Type: 'AWS::EFS::MountTarget'
+    Properties:
+      FileSystemId: !Ref EFSFileSystem
+      SubnetId: !ImportValue ECSPrivateSubnet2ID
+      SecurityGroups:
+        - !ImportValue EFSSecurityGroupID
+
+Outputs:
+  EFSFileSystemId:
+    Description: 'ID del sistema de archivos EFS'
+    Value: !Ref EFSFileSystem
+    Export:
+      Name: SeekerEFSFileSystemId
+
+  EFSAccessPointSeekerId:
+    Description: 'ID del Access Point de Seeker Server'
+    Value: !Ref EFSAccessPointSeeker
+    Export:
+      Name: EFSAccessPointSeekerId

@@ -94,3 +94,61 @@ Outputs:
     Value: !Ref EFSAccessPointSeeker
     Export:
       Name: EFSAccessPointSeekerId
+
+---------------------------------------------------------------
+Resources:
+  # ECS Task Definition
+  ECSTaskDefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    Properties:
+      Family: 'UbuntuTask'
+      Cpu: '4096'
+      Memory: '16384'
+      EphemeralStorage:
+        SizeInGiB: 40
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      Volumes:
+        - Name: seekerEFS
+          EfsVolumeConfiguration:
+            FileSystemId: "fs-XXXXXXXX"  # Cambia esto por el ID del sistema de archivos EFS
+            AuthorizationConfig:
+              AccessPointId: "fsap-XXXXXXXX"  # Cambia esto por el ID del Access Point de EFS
+              Iam: "ENABLED"
+            RootDirectory: "/seeker"
+            TransitEncryption: "ENABLED"
+
+      ContainerDefinitions:
+        - Name: ubuntu
+          Image: !Ref Imagencontainer
+          Essential: true
+          Command:
+            - /bin/bash
+            - "-c"
+            - |
+              set -e
+              echo "Starting seeker setup..."
+              sh ./seekerdeploy/seeker-server-linux64-2025.1.0.sh accept-license=agree install-dir=/home/seeker server-http-port=8080 server-https-port=8443
+              /seekerdeploy/install/sk_ctl start
+              tail -f /dev/null
+          PortMappings:
+            - ContainerPort: 8080
+              Protocol: tcp
+            - ContainerPort: 8443
+              Protocol: tcp
+          MountPoints:
+            - SourceVolume: seekerEFS
+              ContainerPath: /seeker  # Monta el volumen en /seeker dentro del contenedor
+
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: '/ecs/logs-seeker'
+              awslogs-stream-prefix: 'logs-seeker'
+              awslogs-region: !Ref 'AWS::Region'
+

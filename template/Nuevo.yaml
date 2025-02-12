@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Task Definition for Ubuntu Linux (ARM) on ECS Fargate with Seeker and EFS.
+
+Parameters:
+  Imagencontainer:
+    Default: 258840583819.dkr.ecr.us-west-2.amazonaws.com/seeker:3.5
+    Type: String
+    Description: Used to resolve images of container.
+
+Resources:
+  # IAM Role for ECS Task Execution
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ECSFargateTaskExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:GetAuthorizationToken
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - elasticfilesystem:ClientMount
+                  - elasticfilesystem:ClientWrite
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:GetParametersByPath
+                Resource:
+                  - arn:aws:ssm:us-west-2:258840583819:parameter/seeker/prod/database-user
+                  - arn:aws:ssm:us-west-2:258840583819:parameter/seeker/prod/database-password
+
+  # IAM Role for ECS Task to access EFS
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ECSFargateTaskRolePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - efs:ClientMount
+                  - efs:ClientWrite
+                  - efs:DescribeFileSystems
+                  - efs:DescribeMountTargets
+                  - efs:DescribeAccessPoints
+                Resource:
+                  - !ImportValue SeekerEFSFileSystemArn
+                  - !ImportValue EFSAccessPointSeekerArn
+
+  # ECS Task Definition
+  ECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: UbuntuTask
+      Cpu: '4096'
+      Memory: '16384'
+      EphemeralStorage:
+        SizeInGiB: 40
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt ECSTaskRole.Arn
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      Volumes:
+        - Name: seekerEFS
+          EfsVolumeConfiguration:
+            FileSystemId: !ImportValue SeekerEFSFileSystemId
+            AuthorizationConfig:
+              AccessPointId: !ImportValue EFSAccessPointSeekerId
+              Iam: DISABLED
+            TransitEncryption: ENABLED
+            RootDirectory: /
+      ContainerDefinitions:
+        - Name: ubuntu
+          Image: !Ref Imagencontainer
+          Essential: true
+          Environment:
+            - Name: DB_USER
+              ValueFrom: /seeker/prod/database-user
+            - Name: DB_PASSW
+              ValueFrom: /seeker/prod/database-password
+          Command:
+            - /bin/bash
+            - '-c'
+            - |
+              set -e
+              echo "Starting seeker setup..."
+              sh ./seeker-server-linux64-2025.1.0.sh accept-license=agree install-dir=/seekerdeploy \
+              server-http-port=8080 server-https-port=8443 external-database=true \
+              database-host=aurora-postgres-instance.cnymivgbq9vm.us-west-2.rds.amazonaws.com \
+              database-port=5432 database-name=seekerdb database-user=$DB_USER database-password=$DB_PASSW
+              /seekerdeploy/install/sk_ctl start
+              tail -f /dev/null
+          PortMappings:
+            - ContainerPort: 5080
+              Protocol: tcp
+            - ContainerPort: 5443
+              Protocol: tcp
+          MountPoints:
+            - SourceVolume: seekerEFS
+              ContainerPath: /seeker
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/logs-seeker
+              awslogs-stream-prefix: logs-seeker
+              awslogs-region: !Ref AWS::Region
+
+Outputs:
+  ECSTaskDefinitionArn:
+    Description: ARN de la Task Definition
+    Value: !Ref ECSTaskDefinition
+    Export:
+      Name: SeekerECSTaskDefinitionArn

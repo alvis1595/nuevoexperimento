@@ -26,7 +26,7 @@ Resources:
           ContainerPort: 5080
           TargetGroupArn: !ImportValue seeker-target-group-arn
       PlatformVersion: 1.4.0
-      TaskDefinition: !ImportValue UbuntuTaskDefinitionArn
+      TaskDefinition: !ImportValue SeekerECSTaskDefinitionArn
       PropagateTags: SERVICE
       Tags:
         - Key: Name

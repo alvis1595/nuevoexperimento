@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  WizAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: Wiz-Access-Role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: "arn:aws:iam::WIZ_ACCOUNT_ID:root"
+            Action: "sts:AssumeRole"
+            Condition:
+              StringEquals:
+                "sts:ExternalId": "WIZ_EXTERNAL_ID"
+      Policies:
+        - PolicyName: WizReadOnlyAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "ec2:Describe*"
+                  - "iam:GetRole"
+                  - "iam:ListAttachedRolePolicies"
+                  - "iam:ListRolePolicies"
+                  - "iam:ListInstanceProfiles"
+                  - "iam:GetPolicyVersion"
+                  - "iam:GetPolicy"
+                  - "organizations:ListAccounts"
+                  - "organizations:DescribeOrganization"
+                Resource: "*"

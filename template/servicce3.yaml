@@ -23,7 +23,7 @@ Resources:
             - !ImportValue ECSSeekerPrivateSubnet2ID
       LoadBalancers:
         - ContainerName: ubuntu
-          ContainerPort: 8080
+          ContainerPort: 5080
           TargetGroupArn: !ImportValue seeker-target-group-arn
       PlatformVersion: 1.4.0
       TaskDefinition: !ImportValue UbuntuTaskDefinitionArn

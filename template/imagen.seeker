@@ -35,3 +35,40 @@ RUN sh ./seeker-server-linux64-2025.1.0.sh accept-license=agree install-dir=/hom
 
 # Comando para iniciar el servicio
 CMD ["/home/seeker/install/sk_ctl", "start"]
+
+—------------------------------
+
+# Imagen base
+FROM bgxpa-imgprod.jfrog.io/ubuntu:20.04
+
+# Usuario root para instalación
+USER root
+
+# Actualizar e instalar dependencias
+RUN apt-get clean && apt-get update
+RUN apt-get install -y locales fontconfig iputils-ping netcat
+
+# Generar configuración local en_US.UTF-8
+RUN locale-gen en_US.UTF-8
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8
+RUN update-locale LANG=en_US.UTF-8
+
+# Crear usuario seeker y asignarle bash
+RUN useradd -m seeker
+RUN chsh -s /bin/bash seeker
+
+# Cambiar a usuario seeker
+USER seeker
+WORKDIR /home/seeker
+
+# Copiar el archivo de instalación al home de seeker
+COPY seeker-server-linux64-2025.1.0.sh /home/seeker/
+
+# Definir variables de entorno sin asignar valores (ECS las inyectará)
+ENV DB_USER=""
+ENV DB_PASSWORD=""
+ENV DB_HOST=""
+ENV DB_PORT=""
+
+# Dejar el contenedor listo para recibir comandos de ECS
+ENTRYPOINT ["/bin/bash", "-c", "tail -f /dev/null"] 

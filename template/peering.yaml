@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template to create a VPC Peering Connection between ECS and RDS VPCs'
+
+Resources:
+  VPCPeeringConnection:
+    Type: AWS::EC2::VPCPeeringConnection
+    Properties:
+      VpcId: !ImportValue VPCEcsId  # Importa la VPC de ECS
+      PeerVpcId: !ImportValue VPCRdsId  # Importa la VPC de RDS
+      Tags:
+        - Key: Name
+          Value: Peering-VPC-ECS-RDS
+
+  RouteTableECS:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTableECSId  # Deberías proporcionar el ID de la tabla de rutas de ECS
+      DestinationCidrBlock: 10.222.2.0/23  # Reemplaza con el CIDR de la VPC de RDS
+      VpcPeeringConnectionId: !Ref VPCPeeringConnection
+
+  RouteTableRDS:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTableRDSId  # Deberías proporcionar el ID de la tabla de rutas de RDS
+      DestinationCidrBlock: 10.222.0.0/23  # Reemplaza con el CIDR de la VPC de ECS
+      VpcPeeringConnectionId: !Ref VPCPeeringConnection

@@ -26,3 +26,24 @@ Outputs:
     Value: !Ref PrivateLinkEndpoint
     Export:
       Name: seeker-private-link-endpoint-id
+--------------------------------------------------------------------------------------------------------------------------------------
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'VPC Endpoint Service for exposing NLB via AWS PrivateLink'
+
+Resources:
+  VpcEndpointService:
+    Type: AWS::EC2::VPCEndpointService
+    Properties:
+      NetworkLoadBalancerArns:
+        - !Ref PrivateNLB  # ⚠️ Reemplaza con el ARN real de tu NLB en DevOps
+      AcceptanceRequired: false  # ⚠️ Happy podrá conectarse sin aprobación manual
+      Tags:
+        - Key: Name
+          Value: seeker-private-link-service
+
+Outputs:
+  VpcEndpointServiceName:
+    Description: AWS PrivateLink Service Name
+    Value: !Ref VpcEndpointService
+    Export:
+      Name: seeker-private-link-service-name

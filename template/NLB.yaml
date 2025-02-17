@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Network Load Balancer for Private Subnets in ECS'
+
+Resources:
+  PrivateNLB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: seeker-nlb
+      Scheme: internal  # ⚠️ IMPORTANTE: "internal" para subredes privadas
+      Type: network
+      Subnets:
+        - !ImportValue ECSSeekerPrivateSubnet1ID  # ⚠️ Subredes privadas
+        - !ImportValue ECSSeekerPrivateSubnet2ID
+      LoadBalancerAttributes:
+        - Key: load_balancing.cross_zone.enabled
+          Value: true
+      Tags:
+        - Key: Name
+          Value: seeker-nlb
+
+  # Target Group para ECS
+  SeekerNLBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: seeker-nlb-target-group
+      Port: 5080  # ⚠️ Debe coincidir con el puerto del contenedor en ECS
+      Protocol: TCP  # ⚠️ NLB solo soporta TCP, no HTTP
+      TargetType: ip  # ⚠️ Requerido para Fargate
+      VpcId: !ImportValue ECSVpcID
+      HealthCheckPort: '5080'
+      HealthCheckProtocol: TCP
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+
+  # Listener para NLB
+  NLBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref PrivateNLB
+      Protocol: TCP
+      Port: 5080
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref SeekerNLBTargetGroup
+
+Outputs:
+  PrivateNLBArn:
+    Description: ARN del Network Load Balancer
+    Value: !Ref PrivateNLB
+    Export:
+      Name: seeker-nlb-arn
+
+  PrivateNLBDNS:
+    Description: DNS del NLB
+    Value: !GetAtt PrivateNLB.DNSName
+    Export:
+      Name: seeker-nlb-dns
+
+  SeekerNLBTargetGroupArn:
+    Description: ARN del Target Group del NLB
+    Value: !Ref SeekerNLBTargetGroup
+    Export:
+      Name: seeker-nlb-target-group-arn

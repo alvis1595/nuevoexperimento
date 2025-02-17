@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS PrivateLink for connecting to an existing VPC Endpoint in another AWS account'
+
+Resources:
+  PrivateLinkEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: com.amazonaws.vpce.service-0abcd1234efgh5678  # ⚠️ Asegúrate de que sea correcto
+      VpcId: !ImportValue ECSVpcID  # ⚠️ La VPC donde está el NLB
+      VpcEndpointType: Interface
+      SecurityGroupIds:
+        - !ImportValue PrivateLinkSecurityGroupID
+      SubnetIds:
+        - !ImportValue ECSSeekerPrivateSubnet1ID
+        - !ImportValue ECSSeekerPrivateSubnet2ID
+      PrivateDnsEnabled: true
+      Tags:
+        - Key: Name
+          Value: seeker-private-link
+        - Key: Environment
+          Value: production
+
+Outputs:
+  PrivateLinkEndpointID:
+    Description: ID del VPC Endpoint
+    Value: !Ref PrivateLinkEndpoint
+    Export:
+      Name: seeker-private-link-endpoint-id

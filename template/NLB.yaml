@@ -63,3 +63,35 @@ Outputs:
     Value: !Ref SeekerNLBTargetGroup
     Export:
       Name: seeker-nlb-target-group-arn
+--------------------------------------------------------------------------------
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !ImportValue ECSClusterNameSeeker
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
+      DesiredCount: 1
+      LaunchType: FARGATE
+      HealthCheckGracePeriodSeconds: 60
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !ImportValue ECSseekerSecurityGroupID
+          Subnets:
+            - !ImportValue ECSSeekerPrivateSubnet1ID
+            - !ImportValue ECSSeekerPrivateSubnet2ID
+      LoadBalancers:
+        - ContainerName: ubuntu
+          ContainerPort: 5080
+          TargetGroupArn: !ImportValue seeker-alb-target-group-arn  # ⚡ ALB
+        - ContainerName: ubuntu
+          ContainerPort: 5080
+          TargetGroupArn: !ImportValue seeker-nlb-target-group-arn  # ⚡ NLB
+      PlatformVersion: 1.4.0
+      TaskDefinition: !ImportValue SeekerECSTaskDefinitionArn
+      PropagateTags: SERVICE
+      Tags:
+        - Key: Name
+          Value: seeker-service

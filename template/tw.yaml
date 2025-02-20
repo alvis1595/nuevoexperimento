@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Crea un AWS Transit Gateway (TGW) y configura adjuntos, rutas y propagación de rutas entre VPCs.
+
+Resources:
+  # 🚀 Transit Gateway (TGW)
+  MyTransitGateway:
+    Type: AWS::EC2::TransitGateway
+    Properties:
+      Description: "Transit Gateway para interconectar VPCs"
+      AmazonSideAsn: 64512
+      AutoAcceptSharedAttachments: enable
+      DefaultRouteTableAssociation: enable
+      DefaultRouteTablePropagation: enable
+      DnsSupport: enable
+      VpnEcmpSupport: enable
+
+  # 🚀 TGW Route Table
+  TGWRouteTable:
+    Type: AWS::EC2::TransitGatewayRouteTable
+    Properties:
+      TransitGatewayId: !Ref MyTransitGateway
+
+  # 🚀 TGW Attachment para VPC1
+  TGWAttachmentVPC1:
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties:
+      TransitGatewayId: !Ref MyTransitGateway
+      VpcId: !ImportValue VPC1-ID
+      SubnetIds:
+        - !ImportValue VPC1-PublicSubnet1
+        - !ImportValue VPC1-PublicSubnet2
+
+  # 🚀 TGW Attachment para VPC2
+  TGWAttachmentVPC2:
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties:
+      TransitGatewayId: !Ref MyTransitGateway
+      VpcId: !ImportValue VPC2-ID
+      SubnetIds:
+        - !ImportValue VPC2-PublicSubnet1
+        - !ImportValue VPC2-PublicSubnet2
+
+  # 🚀 Asociar Attachments a TGW Route Table
+  TGWRouteTableAssociationVPC1:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties:
+      TransitGatewayAttachmentId: !Ref TGWAttachmentVPC1
+      TransitGatewayRouteTableId: !Ref TGWRouteTable
+
+  TGWRouteTableAssociationVPC2:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties:
+      TransitGatewayAttachmentId: !Ref TGWAttachmentVPC2
+      TransitGatewayRouteTableId: !Ref TGWRouteTable
+
+  # 🚀 Propagar Rutas en la TGW Route Table
+  TGWRoutePropagationVPC1:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayAttachmentId: !Ref TGWAttachmentVPC1
+      TransitGatewayRouteTableId: !Ref TGWRouteTable
+
+  TGWRoutePropagationVPC2:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayAttachmentId: !Ref TGWAttachmentVPC2
+      TransitGatewayRouteTableId: !Ref TGWRouteTable
+
+  # 🚀 Modificar la Route Table de VPC1 para usar el TGW
+  VPC1RouteToTGW:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !ImportValue VPC1-RouteTableID
+      DestinationCidrBlock: !ImportValue VPC2-CIDR
+      TransitGatewayId: !Ref MyTransitGateway
+
+  # 🚀 Modificar la Route Table de VPC2 para usar el TGW
+  VPC2RouteToTGW:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !ImportValue VPC2-RouteTableID
+      DestinationCidrBlock: !ImportValue VPC1-CIDR
+      TransitGatewayId: !Ref MyTransitGateway
+
+Outputs:
+  TransitGatewayID:
+    Description: "ID del Transit Gateway creado"
+    Value: !Ref MyTransitGateway
+    Export:
+      Name: TGW-ID
+
+  TGWRouteTableID:
+    Description: "ID de la Route Table del TGW"
+    Value: !Ref TGWRouteTable
+    Export:
+      Name: TGW-RouteTableID

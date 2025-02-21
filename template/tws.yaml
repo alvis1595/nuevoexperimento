@@ -97,3 +97,22 @@ Outputs:
     Value: !Ref TGWRouteTable
     Export:
       Name: TGW-RouteTableID
+
+
+
+-----------------------------------------------
+VPC1RouteToTGW:
+  Type: AWS::EC2::Route
+  Properties:
+    RouteTableId: !ImportValue ECSSeekerPrivateRouteId
+    DestinationCidrBlock: !ImportValue VPCSeekerRdsCIDR  # Cambia al CIDR de la otra VPC
+    TransitGatewayId: !Ref MyTransitGateway
+  DependsOn: TGWRoutePropagationVPC1
+
+VPC2RouteToTGW:
+  Type: AWS::EC2::Route
+  Properties:
+    RouteTableId: !ImportValue PrivateRdsSeekerRouteTableId
+    DestinationCidrBlock: !ImportValue VPCSeekerEcsCIDR  # Cambia al CIDR de la otra VPC
+    TransitGatewayId: !Ref MyTransitGateway
+  DependsOn: TGWRoutePropagationVPC2

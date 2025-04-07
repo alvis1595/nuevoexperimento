@@ -1,0 +1,482 @@
+{
+  "id": null,
+  "title": "AWX Dashboard Modern Full",
+  "uid": "awx-full",
+  "version": 1,
+  "schemaVersion": 36,
+  "tags": ["awx", "ansible", "modern"],
+  "timezone": "browser",
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Jobs",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum(awx_jobs_total)", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Successful Jobs",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum(awx_status_total{status=\"successful\"})", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Failed Jobs",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum(awx_status_total{status=\"failed\"})", "refId": "A" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total Projects",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum(awx_projects_total)", "refId": "A" }
+      ]
+    },
+    {
+      "type": "timeSeries",
+      "title": "Jobs Over Time",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(awx_jobs_total[5m])", "refId": "A" }
+      ]
+    },
+    {
+      "type": "gauge",
+      "title": "Capacity Used %",
+      "gridPos": { "x": 0, "y": 12, "w": 6, "h": 5 },
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 100,
+          "unit": "percent"
+        }
+      },
+      "targets": [
+        {
+          "expr": "(sum(awx_instance_consumed_capacity) / sum(awx_instance_capacity)) * 100",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Instance Info",
+      "gridPos": { "x": 6, "y": 12, "w": 18, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "awx_instance_info",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeSeries",
+      "title": "Job Duration (avg 5m)",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg_over_time(awx_job_duration_seconds[5m])",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barGauge",
+      "title": "Jobs by Type",
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(awx_instance_launch_type_total) by (launch_type)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barGauge",
+      "title": "Jobs by User",
+      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(awx_jobs_total) by (user)",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
+
+
+----------------------------------------------------
+funcional
+{
+    "id": null,
+    "title": "AWX Dashboard Modern Full",
+    "uid": "awx-full",
+    "version": 1,
+    "schemaVersion": 36,
+    "tags": ["awx", "ansible", "modern"],
+    "timezone": "browser",
+    "refresh": "10s",
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {
+            "text": "Prometheus",
+            "value": "Prometheus"
+          },
+          "refresh": 1
+        }
+      ]
+    },
+    "panels": [
+      { "type": "stat", "title": "Total Job Templates", "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_job_templates_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Pending Jobs", "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_pending_jobs_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Running Jobs", "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_running_jobs_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Workflow Job Templates", "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_workflow_job_templates_total)", "refId": "A" }] },
+      { "type": "timeseries", "title": "Pending Jobs Over Time", "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 }, "datasource": "$datasource", "targets": [{ "expr": "rate(awx_pending_jobs_total[5m])", "refId": "A" }] },
+      { "type": "gauge", "title": "Capacity Used %", "gridPos": { "x": 0, "y": 12, "w": 6, "h": 5 }, "datasource": "$datasource", "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent", "decimals": 2 } }, "targets": [{ "expr": "(sum(awx_instance_consumed_capacity) / sum(awx_instance_capacity)) * 100", "refId": "A" }] },
+      { "type": "stat", "title": "CPU (Sum)", "gridPos": { "x": 6, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_cpu)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } } },
+      { "type": "stat", "title": "Memory (Sum)", "gridPos": { "x": 12, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_memory)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } } },
+      { "type": "stat", "title": "Remaining Capacity", "gridPos": { "x": 18, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_remaining_capacity)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } } },
+  
+      { "type": "stat", "title": "Organizations", "gridPos": { "x": 0, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_organizations_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Teams", "gridPos": { "x": 6, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_teams_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Users", "gridPos": { "x": 12, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_users_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Inventories", "gridPos": { "x": 18, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_inventories_total)", "refId": "A" }] },
+  
+      { "type": "stat", "title": "Projects", "gridPos": { "x": 0, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_projects_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Schedules", "gridPos": { "x": 6, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_schedules_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Sessions", "gridPos": { "x": 12, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_sessions_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Hosts", "gridPos": { "x": 18, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_hosts_total)", "refId": "A" }] },
+  
+      { "type": "stat", "title": "Status Total", "gridPos": { "x": 0, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_status_total)", "refId": "A" }] },
+      { "type": "stat", "title": "License Total", "gridPos": { "x": 6, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_license_instance_total)", "refId": "A" }] },
+      { "type": "stat", "title": "License Free", "gridPos": { "x": 12, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_license_instance_free)", "refId": "A" }] },
+      { "type": "stat", "title": "Launch Types", "gridPos": { "x": 18, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_launch_type_total)", "refId": "A" }] },
+  
+      { "type": "stat", "title": "Instance Status", "gridPos": { "x": 0, "y": 28, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_status_total)", "refId": "A" }] },
+      { "type": "table", "title": "System Info", "gridPos": { "x": 6, "y": 28, "w": 9, "h": 6 }, "datasource": "$datasource", "targets": [{ "expr": "awx_system_info", "format": "table", "refId": "A" }] },
+      { "type": "stat", "title": "DB Connections", "gridPos": { "x": 15, "y": 28, "w": 9, "h": 6 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_database_connections_total)", "refId": "A" }] }
+    ]
+  }
+
+----------------------------------------------------------------------------
+{
+    "id": null,
+    "title": "AWX Dashboard Modern Full",
+    "uid": "awx-full",
+    "version": 1,
+    "schemaVersion": 36,
+    "tags": ["awx", "ansible", "modern"],
+    "timezone": "browser",
+    "refresh": "10s",
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {
+            "text": "Prometheus",
+            "value": "Prometheus"
+          },
+          "refresh": 1
+        }
+      ]
+    },
+    "panels": [
+      { "type": "stat", "title": "Total Job Templates", "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_job_templates_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Pending Jobs", "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_pending_jobs_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Running Jobs", "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_running_jobs_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Workflow Job Templates", "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_workflow_job_templates_total)", "refId": "A" }] },
+      { "type": "timeseries", "title": "Pending Jobs Over Time", "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 }, "datasource": "$datasource", "targets": [{ "expr": "rate(awx_pending_jobs_total[5m])", "refId": "A" }] },
+      { "type": "gauge", "title": "Capacity Used %", "gridPos": { "x": 0, "y": 12, "w": 6, "h": 5 }, "datasource": "$datasource", "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent", "decimals": 2 } }, "targets": [{ "expr": "(sum(awx_instance_consumed_capacity) / sum(awx_instance_capacity)) * 100", "refId": "A" }] },
+      { "type": "stat", "title": "CPU (Sum)", "gridPos": { "x": 6, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_cpu)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } } },
+      { "type": "stat", "title": "Memory (Sum)", "gridPos": { "x": 12, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_memory)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } } },
+      { "type": "stat", "title": "Remaining Capacity", "gridPos": { "x": 18, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_remaining_capacity)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } } },
+      { "type": "stat", "title": "Organizations", "gridPos": { "x": 0, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_organizations_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Teams", "gridPos": { "x": 6, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_teams_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Users", "gridPos": { "x": 12, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_users_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Inventories", "gridPos": { "x": 18, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_inventories_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Projects", "gridPos": { "x": 0, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_projects_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Schedules", "gridPos": { "x": 6, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_schedules_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Sessions", "gridPos": { "x": 12, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_sessions_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Hosts", "gridPos": { "x": 18, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_hosts_total)", "refId": "A" }] },
+      {
+        "type": "piechart",
+        "title": "Status Total",
+        "gridPos": { "x": 0, "y": 24, "w": 6, "h": 4 },
+        "datasource": "$datasource",
+        "targets": [
+          {
+            "expr": "awx_status_total",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "right"
+          },
+          "tooltip": {
+            "mode": "single"
+          },
+          "pieType": "pie"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "decimals": 0
+          },
+          "overrides": []
+        },
+        "pluginVersion": "6.3.5"
+      },
+      { "type": "stat", "title": "License Total", "gridPos": { "x": 6, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_license_instance_total)", "refId": "A" }] },
+      { "type": "stat", "title": "License Free", "gridPos": { "x": 12, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_license_instance_free)", "refId": "A" }] },
+      { "type": "stat", "title": "Launch Types", "gridPos": { "x": 18, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_launch_type_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Instance Status", "gridPos": { "x": 0, "y": 28, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_status_total)", "refId": "A" }] },
+      { "type": "table", "title": "System Info", "gridPos": { "x": 6, "y": 28, "w": 9, "h": 6 }, "datasource": "$datasource", "targets": [{ "expr": "awx_system_info", "format": "table", "refId": "A" }] },
+      { "type": "stat", "title": "DB Connections", "gridPos": { "x": 15, "y": 28, "w": 9, "h": 6 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_database_connections_total)", "refId": "A" }] }
+    ]
+  }
+
+  ------------------------------------------------------------------------------
+  {
+    "id": null,
+    "title": "AWX Dashboard Modern Full",
+    "uid": "awx-full",
+    "version": 1,
+    "schemaVersion": 36,
+    "tags": ["awx", "ansible", "modern"],
+    "timezone": "browser",
+    "refresh": "10s",
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {
+            "text": "Prometheus",
+            "value": "Prometheus"
+          },
+          "refresh": 1
+        }
+      ]
+    },
+    "panels": [
+      { "type": "stat", "title": "Total Job Templates", "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_job_templates_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Pending Jobs", "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_pending_jobs_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Running Jobs", "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_running_jobs_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Workflow Job Templates", "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_workflow_job_templates_total)", "refId": "A" }] },
+      { "type": "timeseries", "title": "Pending Jobs Over Time", "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 }, "datasource": "$datasource", "targets": [{ "expr": "rate(awx_pending_jobs_total[5m])", "refId": "A" }] },
+      { "type": "gauge", "title": "Capacity Used %", "gridPos": { "x": 0, "y": 12, "w": 6, "h": 5 }, "datasource": "$datasource", "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent", "decimals": 2 } }, "targets": [{ "expr": "(sum(awx_instance_consumed_capacity) / sum(awx_instance_capacity)) * 100", "refId": "A" }] },
+      { "type": "stat", "title": "CPU (Sum)", "gridPos": { "x": 6, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_cpu)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } } },
+      { "type": "stat", "title": "Memory (Sum)", "gridPos": { "x": 12, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_memory)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } } },
+      { "type": "stat", "title": "Remaining Capacity", "gridPos": { "x": 18, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_remaining_capacity)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } } },
+      { "type": "stat", "title": "Organizations", "gridPos": { "x": 0, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_organizations_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Teams", "gridPos": { "x": 6, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_teams_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Users", "gridPos": { "x": 12, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_users_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Inventories", "gridPos": { "x": 18, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_inventories_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Projects", "gridPos": { "x": 0, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_projects_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Schedules", "gridPos": { "x": 6, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_schedules_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Sessions", "gridPos": { "x": 12, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_sessions_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Hosts", "gridPos": { "x": 18, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_hosts_total)", "refId": "A" }] },
+      {
+        "type": "piechart",
+        "title": "Status Total",
+        "gridPos": { "x": 0, "y": 24, "w": 6, "h": 4 },
+        "datasource": "$datasource",
+        "targets": [
+          { "expr": "awx_status_total", "refId": "A" }
+        ],
+        "options": {
+          "legend": { "displayMode": "list", "placement": "right" },
+          "tooltip": { "mode": "single" },
+          "pieType": "pie"
+        },
+        "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] },
+        "pluginVersion": "6.3.5"
+      },
+      {
+        "type": "piechart",
+        "title": "Launch Types",
+        "gridPos": { "x": 18, "y": 24, "w": 6, "h": 4 },
+        "datasource": "$datasource",
+        "targets": [
+          { "expr": "awx_instance_launch_type_total", "refId": "A" }
+        ],
+        "options": {
+          "legend": { "displayMode": "list", "placement": "right" },
+          "tooltip": { "mode": "single" },
+          "pieType": "pie"
+        },
+        "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] },
+        "pluginVersion": "6.3.5"
+      },
+      { "type": "stat", "title": "License Total", "gridPos": { "x": 6, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_license_instance_total)", "refId": "A" }] },
+      { "type": "stat", "title": "License Free", "gridPos": { "x": 12, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_license_instance_free)", "refId": "A" }] },
+      { "type": "stat", "title": "Instance Status", "gridPos": { "x": 0, "y": 28, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_status_total)", "refId": "A" }] },
+      {
+        "type": "table",
+        "title": "System Info",
+        "gridPos": { "x": 6, "y": 28, "w": 9, "h": 6 },
+        "datasource": "$datasource",
+        "targets": [
+          {
+            "expr": "awx_system_info",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {},
+              "indexByName": {},
+              "renameByName": {},
+              "columns": [
+                { "text": "install_uuid" },
+                { "text": "instance" },
+                { "text": "license_expiry" },
+                { "text": "license_type" },
+                { "text": "tower_version" }
+              ]
+            }
+          }
+        ]
+      },
+      { "type": "stat", "title": "DB Connections", "gridPos": { "x": 15, "y": 28, "w": 9, "h": 6 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_database_connections_total)", "refId": "A" }] }
+    ]
+  }
+----------------------------------------------------------------
+{
+    "id": null,
+    "title": "AWX Dashboard Modern Full",
+    "uid": "awx-full",
+    "version": 1,
+    "schemaVersion": 36,
+    "tags": ["awx", "ansible", "modern"],
+    "timezone": "browser",
+    "refresh": "10s",
+    "templating": {
+      "list": [
+        {
+          "name": "datasource",
+          "type": "datasource",
+          "query": "prometheus",
+          "current": {
+            "text": "Prometheus",
+            "value": "Prometheus"
+          },
+          "refresh": 1
+        }
+      ]
+    },
+    "panels": [
+      { "type": "stat", "title": "Total Job Templates", "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_job_templates_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Pending Jobs", "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_pending_jobs_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Running Jobs", "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_running_jobs_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Workflow Job Templates", "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_workflow_job_templates_total)", "refId": "A" }] },
+      { "type": "timeseries", "title": "Pending Jobs Over Time", "gridPos": { "x": 0, "y": 4, "w": 24, "h": 8 }, "datasource": "$datasource", "targets": [{ "expr": "rate(awx_pending_jobs_total[5m])", "refId": "A" }] },
+      { "type": "gauge", "title": "Capacity Used %", "gridPos": { "x": 0, "y": 12, "w": 6, "h": 5 }, "datasource": "$datasource", "fieldConfig": { "defaults": { "min": 0, "max": 100, "unit": "percent", "decimals": 2 } }, "targets": [{ "expr": "(sum(awx_instance_consumed_capacity) / sum(awx_instance_capacity)) * 100", "refId": "A" }] },
+      { "type": "stat", "title": "CPU (Sum)", "gridPos": { "x": 6, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_cpu)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } } },
+      { "type": "stat", "title": "Memory (Sum)", "gridPos": { "x": 12, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_memory)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } } },
+      { "type": "stat", "title": "Remaining Capacity", "gridPos": { "x": 18, "y": 12, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_remaining_capacity)", "refId": "A" }], "fieldConfig": { "defaults": { "unit": "bytes", "decimals": 2 } } },
+      { "type": "stat", "title": "Organizations", "gridPos": { "x": 0, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_organizations_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Teams", "gridPos": { "x": 6, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_teams_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Users", "gridPos": { "x": 12, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_users_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Inventories", "gridPos": { "x": 18, "y": 16, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_inventories_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Projects", "gridPos": { "x": 0, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_projects_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Schedules", "gridPos": { "x": 6, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_schedules_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Sessions", "gridPos": { "x": 12, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_sessions_total)", "refId": "A" }] },
+      { "type": "stat", "title": "Hosts", "gridPos": { "x": 18, "y": 20, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_hosts_total)", "refId": "A" }] },
+      {
+        "type": "piechart",
+        "title": "Status Total",
+        "gridPos": { "x": 0, "y": 24, "w": 6, "h": 4 },
+        "datasource": "$datasource",
+        "targets": [
+          { "expr": "sum by(status)(awx_status_total)", "refId": "A" ,
+          "instant": false,
+          "legendFormat": "{{status}}",
+          "refId": "A"}
+        ],
+        "options": {
+          "legend": { "displayMode": "list", "placement": "right" },
+          "tooltip": { "mode": "single" },
+          "pieType": "pie"
+        },
+        "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] },
+        "pluginVersion": "6.3.5"
+      },
+      {
+        "type": "piechart",
+        "title": "Launch Types",
+        "gridPos": { "x": 18, "y": 24, "w": 6, "h": 4 },
+        "datasource": "$datasource",
+        "targets": [
+          { "expr": "sum by(launch_type)(awx_instance_launch_type_total)", "refId": "A" }
+        ],
+        "options": {
+          "legend": { "displayMode": "list", "placement": "right" },
+          "tooltip": { "mode": "single" },
+          "pieType": "pie"
+        },
+        "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 }, "overrides": [] },
+        "pluginVersion": "6.3.5"
+      },
+      { "type": "stat", "title": "License Total", "gridPos": { "x": 6, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_license_instance_total)", "refId": "A" }] },
+      { "type": "stat", "title": "License Free", "gridPos": { "x": 12, "y": 24, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_license_instance_free)", "refId": "A" }] },
+      { "type": "stat", "title": "Instance Status", "gridPos": { "x": 0, "y": 28, "w": 6, "h": 4 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_instance_status_total)", "refId": "A" }] },
+      {
+        "type": "table",
+        "title": "System Info",
+        "gridPos": { "x": 6, "y": 28, "w": 9, "h": 6 },
+        "datasource": "$datasource",
+        "targets": [
+          { "expr": "awx_system_info", "format": "table", "refId": "A" }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "columns": [
+                { "text": "install_uuid" },
+                { "text": "instance" },
+                { "text": "license_expiry" },
+                { "text": "license_type" },
+                { "text": "tower_version" }
+              ]
+            }
+          }
+        ]
+      },
+      { "type": "stat", "title": "DB Connections", "gridPos": { "x": 15, "y": 28, "w": 9, "h": 6 }, "datasource": "$datasource", "targets": [{ "expr": "sum(awx_database_connections_total)", "refId": "A" }] }
+    ]
+  }
+  

@@ -1,0 +1,52 @@
+-----rol
+---
+- name: Crear usuario externo en Jira
+  uri:
+    url: "{{ jira_url }}"
+    method: POST
+    user: "{{ jira_email }}"
+    password: "{{ jira_api_token }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    body: "{{ new_user | to_json }}"
+    status_code: 201
+    return_content: yes
+  register: jira_response
+
+- name: Extraer accountId
+  set_fact:
+    account_id: "{{ (jira_response.json.accountId | default('')) }}"
+
+- name: Agregar usuario al grupo
+  uri:
+    url: "{{ jira_group_url }}"
+    method: POST
+    user: "{{ jira_email }}"
+    password: "{{ jira_api_token }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    body: "{{ {'accountId': account_id} | to_json }}"
+    status_code: 201
+    return_content: yes
+  when: account_id != ""
+  register: group_response
+
+- name: Mostrar respuesta final
+  debug:
+    msg:
+      - "Usuario creado con ID: {{ account_id }}"
+      - "Respuesta al agregar al grupo: {{ group_response.status }}"
+-----------------------------------
+vars:
+---
+jira_url: "https://bgx-pa.atlassian.net/rest/api/2/user"
+jira_group_url: "https://bgx-pa.atlassian.net/rest/api/2/group/user?groupId=15e86486-e658-4e54-8520-7f1b7ce2ed3b"
+jira_email: "tu-email-admin@empresa.com"
+jira_api_token: "tu_token_de_api"
+new_user:
+  name: "alr95"
+  emailAddress: "alvis1595@gmail.com"
+  products: []
+------------------------------------------------------------------------

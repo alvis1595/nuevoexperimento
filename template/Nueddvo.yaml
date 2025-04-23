@@ -99,3 +99,27 @@ Outputs:
     Value: !Ref ECSTaskDefinition
     Export:
       Name: SeekerTaskDefinitionArn
+
+
+
+
+      ------------------------------------
+      Command:
+  - /bin/bash
+  - "-c"
+  - |
+    set -e
+    echo "Configurando nginx.conf con certificados TLS y soporte para proxy_protocol..."
+
+    # Reemplaza certificados
+    sed -i 's|ssl_certificate .*|ssl_certificate /home/seeker/certs/seeker.crt;|' /home/seeker/server/conf/nginx.conf
+    sed -i 's|ssl_certificate_key .*|ssl_certificate_key /home/seeker/certs/seeker.key;|' /home/seeker/server/conf/nginx.conf
+
+    # Ajusta proxy_protocol y server_name en el bloque del puerto 8443
+    sed -i 's|listen 8443 ssl;|listen 8443 ssl proxy_protocol;|' /home/seeker/server/conf/nginx.conf
+    sed -i '/listen 8443 ssl proxy_protocol;/a real_ip_header proxy_protocol;\nset_real_ip_from 0.0.0.0/0;\nserver_name seeker.tunel.pribafo;' /home/seeker/server/conf/nginx.conf
+
+    echo "Iniciando Seeker Server..."
+    /home/seeker/install/sk_ctl start
+
+    tail -f /dev/null

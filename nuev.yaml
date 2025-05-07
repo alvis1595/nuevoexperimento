@@ -1,0 +1,15 @@
+stage('assigned state to do') {
+  steps {
+    script {
+      withCredentials([usernamePassword(credentialsId: 'token-jira-auth', usernameVariable: 'JIRA_USER', passwordVariable: 'JIRA_TOKEN')]) {
+        sh """
+          curl -k -X POST \\
+            --url 'https://bgx-pa.atlassian.net/rest/api/3/issue/${issue_key}/transitions' \\
+            --user "$JIRA_USER:$JIRA_TOKEN" \\
+            --header 'Content-Type: application/json' \\
+            --data '{ "transition": { "id": "51" } }'
+        """
+      }
+    }
+  }
+}

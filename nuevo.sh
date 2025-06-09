@@ -466,3 +466,14 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 pip install --upgrade setuptools
 
+
+
+-------------------------------------------
+errores docker compose
+pip uninstall docker-compose docker docker-py
+rm -f /usr/local/bin/docker-compose
+
+alias docker-compose='podman-compose'
+ln -s $(which podman-compose) /usr/local/bin/docker-compose
+
+

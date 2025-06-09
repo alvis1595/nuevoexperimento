@@ -454,3 +454,15 @@ Password:
 Password (again):
 Superuser created successfully.
 [root@container awx]#
+
+
+--------------------------------------
+export COMPOSE_TAG=24.6.1
+make docker-compose-build
+
+
+dnf install -y glibc-langpack-en
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+pip install --upgrade setuptools
+

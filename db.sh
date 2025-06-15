@@ -25,3 +25,14 @@ START SLAVE;
 
 
 SHOW SLAVE STATUS\G
+
+
+
+[root@dbcontainer awx]# docker exec -it mysql-slave mysql -uroot -prootpass -e "SHOW SLAVE STATUS\G" | \
+> grep -E 'Master_Host|Master_User|Master_Log_File|Read_Master_Log_Pos'
+                  Master_Host: mysql-master
+                  Master_User: replicador
+              Master_Log_File: mysql-bin.000003
+          Read_Master_Log_Pos: 2495117
+        Relay_Master_Log_File: mysql-bin.000003
+[root@dbcontainer awx]#

@@ -1,0 +1,14 @@
+- name: Crear script de rsync en origen
+  template:
+    src: rsync_script.j2
+    dest: /tmp/rsync_backup.sh
+    mode: '0755'
+  delegate_to: "{{ origen_server }}"
+
+- name: Ejecutar script con nohup en segundo plano
+  ansible.builtin.shell: "nohup /tmp/rsync_backup.sh &"
+  args:
+    chdir: /tmp
+  async: 1
+  poll: 0
+  delegate_to: "{{ origen_server }}"

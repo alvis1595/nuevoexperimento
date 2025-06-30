@@ -1,0 +1,20 @@
+---
+- name: Eliminar carpetas dentro de contenedores Podman
+  hosts: servidor_contenedores
+  gather_facts: false
+  become: true
+
+  vars:
+    contenedores:
+      - contenedor1
+      - contenedor2
+      - contenedor3
+      - contenedor4
+    carpetas:
+      - /pruebas/uno
+      - /pruebas2/dos
+
+  tasks:
+    - name: Eliminar carpetas en contenedores Podman
+      ansible.builtin.command: "podman exec {{ item.0 }} rm -rf {{ item.1 }}"
+      loop: "{{ contenedores | product(carpetas) | list }}"

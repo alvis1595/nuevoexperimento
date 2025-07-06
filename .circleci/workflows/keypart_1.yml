@@ -1,0 +1,23 @@
+workflows:
+  iac-compute:
+    jobs:
+      - approval:
+          name: Tech lead approvement prod 🤯🙊💤
+          type: approval
+          filters:
+            branches:
+              only: main
+
+      - deploy:
+          name: Deploy IAC Key part 🧙‍♂️
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: template/key.yaml
+          RESOURCE_NAME: key
+          requires:
+            - Tech lead approvement prod 🤯🙊💤
+          filters:
+            branches:
+              only: main
+          context:
+            - idaws
+            - clavaws

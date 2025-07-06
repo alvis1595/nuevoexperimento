@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Crear un Key Pair en EC2 con CloudFormation
+
+Resources:
+  MyKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: nueva-partk
+
+Outputs:
+  KeyPairNameOutput:
+    Description: Nombre del Key Pair creado
+    Value: !Ref MyKeyPair

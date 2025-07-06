@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   pipeline_config:
     type: string
-    default: config_1.yml
+    default: config_cuenta1.yml
 
 executors:
   arm-executor:
@@ -44,27 +44,3 @@ jobs:
           name: Deploying <<parameters.RESOURCE_NAME>> 🎯
           command: ./scripts/deploy.sh <<parameters.TEMPLATE_FILE_NAME>> <<parameters.RESOURCE_NAME>>
           no_output_timeout: 40m
-
-workflows:
-  iac-compute:
-    jobs:
-      - approval:
-          name: Tech lead approvement prod 👓 👨‍💻
-          type: approval
-          filters:
-            branches:
-              only: main
-
-      - deploy:
-          name: Deploy IAC Key part
-          DEPLOY_ENV: dev
-          TEMPLATE_FILE_NAME: template/key.yml
-          RESOURCE_NAME: key
-          requires:
-            - Tech lead approvement prod 👓 👨‍💻
-          filters:
-            branches:
-              only: main
-          context:
-            - idaws
-            - clavaws

@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Crear un usuario IAM llamado demo
+
+Resources:
+  DemoUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: demo
+
+Outputs:
+  DemoUserName:
+    Description: Nombre del usuario IAM creado
+    Value: !Ref DemoUser

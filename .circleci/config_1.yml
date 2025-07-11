@@ -56,10 +56,10 @@ workflows:
               only: main
 
       - deploy:
-          name: Deploy IAC Key part
+          name: Deploy IAC usuario
           DEPLOY_ENV: dev
-          TEMPLATE_FILE_NAME: template/key.yml
-          RESOURCE_NAME: key
+          TEMPLATE_FILE_NAME: template/usuario.yaml
+          RESOURCE_NAME: usuario-iam
           requires:
             - Tech lead approvement prod 👓 👨‍💻
           filters:

@@ -1,56 +1,44 @@
 version: 2.1
 
-setup: true
+setup: true  # Pipeline de setup dinámico
 
 orbs:
-  continuation: circleci/continuation@0.1.2
+  continuation: circleci/continuation@0.1.2  # Orb oficial para pipelines dinámicos
 
 parameters:
-  jobs_file:
+  pipeline_config:
     type: string
-    default: config_cuenta1.yml
-  workflow_file:
-    type: string
-    default: keypart_1.yml
-
+    default: config_1.yml
 
 workflows:
   setup:
     jobs:
-      - trigger_pipeline:
-          jobs_file: << pipeline.parameters.jobs_file >>
-          workflow_file: << pipeline.parameters.workflow_file >>
-          
-
+      - trigger_pipeline:  # Ejecuta el checkout y validación
+          pipeline_config: << pipeline.parameters.pipeline_config >>
 jobs:
   trigger_pipeline:
     docker:
       - image: cimg/base:stable
     parameters:
-      jobs_file:
-        type: string
-      workflow_file:
+      pipeline_config:
         type: string
     steps:
       - checkout
       - run:
-          name: Instalar yq
+          name: Verificar Archivos en .circleci/
           command: |
-            mkdir -p ~/bin
-            YQ_VERSION=v4.43.1
-            wget https://github.com/mikefarah/yq/releases/download/$YQ_VERSION/yq_linux_amd64 -O ~/bin/yq
-            chmod +x ~/bin/yq
-            echo 'export PATH="$HOME/bin:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
-            yq --version
+            echo "🔍 Listando archivos en .circleci/"
+            ls -la .circleci/
       - run:
-          name: ✅ Usar yq para probar
+          name: Validar Configuración
           command: |
-            echo 'foo: bar' > test.yml
-            yq '.foo' test.yml
-      - run:
-          name: Combinar jobs + workflow seleccionado
-          command: |
-            bash .circleci/build_config.sh << parameters.jobs_file >> << parameters.workflow_file >>
+            CONFIG_FILE=".circleci/<< parameters.pipeline_config >>"
+            echo "🔧 Configuración seleccionada: $CONFIG_FILE"
+            if [ -f "$CONFIG_FILE" ]; then
+              echo "✅ Archivo encontrado: $CONFIG_FILE"
+            else
+              echo "❌ ERROR: Archivo $CONFIG_FILE no encontrado"
+              exit 1
+            fi
       - continuation/continue:
-          configuration_path: .circleci/config_final.yml
+          configuration_path: .circleci/<< parameters.pipeline_config >>  

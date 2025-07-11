@@ -5,7 +5,7 @@ Resources:
   DemoUser:
     Type: AWS::IAM::User
     Properties:
-      UserName: demo
+      UserName: andromeda
 
 Outputs:
   DemoUserName:

@@ -1,0 +1,28 @@
+parameters:
+  workflow_file:
+    type: string
+    default: usuario.yaml
+
+workflows:
+  iac-compute:
+    jobs:
+      - approval:
+          name: Tech lead approvement prod 👓 👨‍💻
+          type: approval
+          filters:
+            branches:
+              only: main
+
+      - deploy:
+          name: Deploy IAC usuario
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: template/usuario.yaml
+          RESOURCE_NAME: usuario-iam
+          requires:
+            - Tech lead approvement prod 👓 👨‍💻
+          filters:
+            branches:
+              only: main
+          context:
+            - idaws
+            - clavaws

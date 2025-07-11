@@ -1,0 +1,28 @@
+parameters:
+  workflow_file:
+    type: string
+    default: usuario3.yaml
+
+workflows:
+  iac-compute:
+    jobs:
+      - approval:
+          name: Tech lead approvement prod 👓 👨‍💻
+          type: approval
+          filters:
+            branches:
+              only: main
+
+      - deploy:
+          name: Deploy IAC usuario tercer intento
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: template/usuarioop.yaml
+          RESOURCE_NAME: usuario-pegaso
+          requires:
+            - Tech lead approvement prod 👓 👨‍💻
+          filters:
+            branches:
+              only: main
+          context:
+            - idaws
+            - clavaws

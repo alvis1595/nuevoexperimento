@@ -2,6 +2,9 @@ parameters:
   workflow_file:
     type: string
     default: keypart_1.yaml
+  stacks_to_run:
+    type: string
+    default: "all"
 
 workflows:
   iac-compute:

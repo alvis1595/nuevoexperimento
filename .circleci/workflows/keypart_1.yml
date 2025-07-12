@@ -1,3 +1,8 @@
+parameters:
+  workflow_file:
+    type: string
+    default: keypart_1.yaml
+
 workflows:
   iac-compute:
     jobs:
@@ -21,3 +26,27 @@ workflows:
           context:
             - idaws
             - clavaws
+          when:
+            condition:
+              or:
+                - equal: [ "part", << pipeline.parameters.stacks_to_run >> ]
+                - equal: [ "all", << pipeline.parameters.stacks_to_run >> ]
+
+      - deploy:
+          name: Deploy IAC usuario
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: template/usuario.yaml
+          RESOURCE_NAME: usuario-iam
+          requires:
+            - Tech lead approvement prod 🤯🙊💤
+          filters:
+            branches:
+              only: main
+          context:
+            - idaws
+            - clavaws
+          when:
+            condition:
+              or:
+                - equal: [ "usuario", << pipeline.parameters.stacks_to_run >> ]
+                - equal: [ "all", << pipeline.parameters.stacks_to_run >> ]

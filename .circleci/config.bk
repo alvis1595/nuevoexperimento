@@ -12,9 +12,7 @@ parameters:
   workflow_file:
     type: string
     default: keypart_1.yml
-  stacks_to_run:
-    type: string
-    default: "all"
+
 
 workflows:
   setup:
@@ -22,7 +20,6 @@ workflows:
       - trigger_pipeline:
           jobs_file: << pipeline.parameters.jobs_file >>
           workflow_file: << pipeline.parameters.workflow_file >>
-          stacks_to_run: << pipeline.parameters.stacks_to_run >>
           
 
 jobs:
@@ -33,8 +30,6 @@ jobs:
       jobs_file:
         type: string
       workflow_file:
-        type: string
-      stacks_to_run:
         type: string
     steps:
       - checkout

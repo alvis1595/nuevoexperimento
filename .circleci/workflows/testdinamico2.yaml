@@ -1,7 +1,7 @@
       - deploy:
           name: Deploy IAC usuario dos op
           DEPLOY_ENV: dev
-          TEMPLATE_FILE_NAME: template/usuaroop.yaml
+          TEMPLATE_FILE_NAME: template/usuarioop.yaml
           RESOURCE_NAME: usuario-iam-ops
           requires:
             - Tech lead approvement prod 👓 👨‍💻

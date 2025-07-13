@@ -53,6 +53,4 @@ jobs:
 
       - continuation/continue:
           configuration_path: .circleci/config_final.yml
-          attach-workspace: false
-          parameters:
-            no-parameter-handoff: true
+          no-parameter-handoff: true

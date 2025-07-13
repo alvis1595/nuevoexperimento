@@ -3,6 +3,8 @@
           DEPLOY_ENV: dev
           TEMPLATE_FILE_NAME: template/usuario.yaml
           RESOURCE_NAME: usuario-iam
+          requires:
+            - Tech lead approvement prod 👓 👨‍💻
           filters:
             branches:
               only: main

@@ -53,3 +53,4 @@ jobs:
 
       - continuation/continue:
           configuration_path: .circleci/config_final.yml
+          no-parameter-handoff: true

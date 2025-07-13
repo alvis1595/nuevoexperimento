@@ -1,9 +1,9 @@
 version: 2.1
 
-parameters:
-  pipeline_config:
-    type: string
-    default: config_cuenta1.yml
+#parameters:
+#  pipeline_config:
+#    type: string
+#    default: config_cuenta1.yml
 
 executors:
   arm-executor:

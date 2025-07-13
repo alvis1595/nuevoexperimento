@@ -31,5 +31,5 @@ echo "              only: main" >> .circleci/config_final.yml
 
 # Agrega cada bloque de workflow según los stacks solicitados
 for STACK in $(echo $STACKS | tr "," "\n"); do
-  cat ".circleci/workflows/${STACK}.yml" >> .circleci/config_final.yml
+  cat ".circleci/workflows/${STACK}.yaml" >> .circleci/config_final.yml
 done

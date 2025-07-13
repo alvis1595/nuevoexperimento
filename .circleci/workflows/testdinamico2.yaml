@@ -1,0 +1,12 @@
+
+      - deploy:
+          name: Deploy IAC usuario dos op
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: template/usuaroop.yaml
+          RESOURCE_NAME: usuario-iam-ops
+          filters:
+            branches:
+              only: main
+          context:
+            - idaws
+            - clavaws

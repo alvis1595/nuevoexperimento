@@ -1,0 +1,12 @@
+
+      - deploy:
+          name: Deploy IAC usuario
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: template/usuario.yaml
+          RESOURCE_NAME: usuario-iam
+          filters:
+            branches:
+              only: main
+          context:
+            - idaws
+            - clavaws

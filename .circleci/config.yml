@@ -51,6 +51,9 @@ jobs:
             chmod +x .circleci/build_config.sh
             .circleci/build_config.sh "<< parameters.stacks_to_run >>" "<< parameters.pipeline_config >>"
 
-      - continuation/continue:
-          configuration_path: .circleci/config_final.yml
-          no-parameter-handoff: true
+      - run:
+          name: Continuar sin pasar parámetros
+          command: |
+            circleci continuation continue \
+              --config .circleci/config_final.yml \
+              --no-parameter-handoff

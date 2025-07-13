@@ -35,7 +35,7 @@ echo "" >> .circleci/config_final.yml
 
 # 🔁 Agrega todos los workflows de stacks seleccionados
 for STACK in $(echo $STACKS | tr "," "\n"); do
-  WORKFLOW_FILE=".circleci/workflows/${STACK}.workflow.yml"
+  WORKFLOW_FILE=".circleci/workflows/${STACK}.yaml"
 
   if [[ -f "$WORKFLOW_FILE" ]]; then
     echo "🔗 Agregando workflow: $WORKFLOW_FILE"

@@ -4,7 +4,7 @@ set -e
 STACKS="$1"
 CONFIG_CUENTA="$2"
 
-echo "📦 Generando config_final.yml para stacks: $STACKS con config: $CONFIG_CUENTA"
+echo "📦 Generando config_final.yml para stacks: $STACKS con configuración de cuenta: $CONFIG_CUENTA"
 
 CONFIG_FILE=".circleci/jobs/${CONFIG_CUENTA}"
 
@@ -13,23 +13,38 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
   exit 1
 fi
 
-# Agrega definición base (cuenta)
+# 🔧 Empieza con la configuración base de la cuenta (version, executor, job: deploy)
 cat "$CONFIG_FILE" > .circleci/config_final.yml
 
-# Agrega workflows
+# 🔧 Asegura salto de línea entre jobs y workflows
+echo "" >> .circleci/config_final.yml
+
+# 🔧 Inicia workflows
 echo "workflows:" >> .circleci/config_final.yml
 echo "  deploy-dynamic:" >> .circleci/config_final.yml
 echo "    jobs:" >> .circleci/config_final.yml
 
-# Aprobación
+# 🔐 Aprobación manual
 echo "      - approval:" >> .circleci/config_final.yml
 echo "          name: Tech lead approvement prod 👓 👨‍💻" >> .circleci/config_final.yml
 echo "          type: approval" >> .circleci/config_final.yml
 echo "          filters:" >> .circleci/config_final.yml
 echo "            branches:" >> .circleci/config_final.yml
 echo "              only: main" >> .circleci/config_final.yml
+echo "" >> .circleci/config_final.yml
 
-# Agrega cada bloque de workflow según los stacks solicitados
+# 🔁 Agrega todos los workflows de stacks seleccionados
 for STACK in $(echo $STACKS | tr "," "\n"); do
-  cat ".circleci/workflows/${STACK}.yaml" >> .circleci/config_final.yml
+  WORKFLOW_FILE=".circleci/workflows/${STACK}.workflow.yml"
+
+  if [[ -f "$WORKFLOW_FILE" ]]; then
+    echo "🔗 Agregando workflow: $WORKFLOW_FILE"
+    cat "$WORKFLOW_FILE" >> .circleci/config_final.yml
+    echo "" >> .circleci/config_final.yml
+  else
+    echo "⚠️  Workflow no encontrado para stack: $STACK"
+  fi
 done
+
+echo "✅ Configuración final generada:"
+cat .circleci/config_final.yml

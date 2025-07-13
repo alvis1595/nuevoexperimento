@@ -8,7 +8,6 @@ orbs:
 parameters:
   stacks_to_run:
     type: string
-    required: true
 #    default: "testdinamico1"
 
   pipeline_config:

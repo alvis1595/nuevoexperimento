@@ -1,0 +1,54 @@
+version: 2.1
+
+setup: true
+
+orbs:
+  continuation: circleci/continuation@0.1.2
+
+parameters:
+  stacks_to_run:
+    type: string
+#    default: "testdinamico1"
+
+  pipeline_config:
+    type: string
+    default: "config_cuenta1.yml"
+
+workflows:
+  setup:
+    jobs:
+      - trigger_pipeline:
+          stacks_to_run: << pipeline.parameters.stacks_to_run >>
+          pipeline_config: << pipeline.parameters.pipeline_config >>
+
+jobs:
+  trigger_pipeline:
+    docker:
+      - image: cimg/base:stable
+    parameters:
+      stacks_to_run:
+        type: string
+      pipeline_config:
+        type: string
+    steps:
+      - checkout
+
+      - run:
+          name: Instalar yq
+          command: |
+            mkdir -p ~/bin
+            YQ_VERSION=v4.43.1
+            curl -L https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64 -o ~/bin/yq
+            chmod +x ~/bin/yq
+            echo 'export PATH="$HOME/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+            yq --version
+
+      - run:
+          name: Generar config_final.yml dinámico
+          command: |
+            chmod +x .circleci/build_config.sh
+            .circleci/build_config.sh "<< parameters.stacks_to_run >>" "<< parameters.pipeline_config >>"
+
+      - continuation/continue:
+          configuration_path: .circleci/config_final.yml

@@ -8,7 +8,7 @@ orbs:
 parameters:
   jobs_file:
     type: string
-    default: usuarios63-iam.yaml
+    default: config_cuenta1.yml
   workflow_file:
     type: string
     default: usuario.yaml

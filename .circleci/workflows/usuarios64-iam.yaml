@@ -1,0 +1,23 @@
+workflows:
+  iac-compute:
+    jobs:
+      - approval:
+          name: Tech lead approvement prod 🧙‍♂️
+          type: approval
+          filters:
+            branches:
+              only: main
+              
+      - deploy:
+          name: Deploy usuarios64-iam
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: template/usuarios64-iam.yaml
+          RESOURCE_NAME: usuarios64-iam
+          requires:
+            - Tech lead approvement prod 🧙‍♂️
+          filters:
+            branches:
+              only: main
+          context:
+            - idaws
+            - clavaws

@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Usuarios IAM con políticas AWS y referencias a políticas custom"
+
+Resources:
+  Elver-iam:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: "Elver-iam"
+      Path: "/"
+      ManagedPolicyArns:
+              - "arn:aws:iam::aws:policy/AdministrationAccess"
+              - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+          Metadata:
+      CustomPolicies:
+      

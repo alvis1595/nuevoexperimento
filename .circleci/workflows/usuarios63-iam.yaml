@@ -1,0 +1,14 @@
+workflows:
+  iac-compute:
+    jobs:
+      - deploy:
+          name: Deploy usuarios63-iam
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: template/usuarios_iam.yaml
+          RESOURCE_NAME: usuarios63-iam
+          filters:
+            branches:
+              only: main
+          context:
+            - idaws
+            - clavaws

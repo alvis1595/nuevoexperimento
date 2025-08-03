@@ -4,7 +4,7 @@ workflows:
       - deploy:
           name: Deploy usuarios63-iam
           DEPLOY_ENV: dev
-          TEMPLATE_FILE_NAME: template/usuarios_iam.yaml
+          TEMPLATE_FILE_NAME: template/usuarios63-iam.yaml
           RESOURCE_NAME: usuarios63-iam
           filters:
             branches:

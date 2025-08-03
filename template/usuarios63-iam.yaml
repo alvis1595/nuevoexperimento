@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Usuarios IAM con políticas AWS y referencias a políticas custom"
+
+Resources:
+  juan-iam:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: "juan-iam"
+      Path: "/"
+      ManagedPolicyArns:
+              - "arn:aws:iam::aws:policy/ReadOnlyAccess"
+              - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+          Metadata:
+      CustomPolicies:
+              - "politicas/custom_billing.json"
+        maria-iam:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: "maria-iam"
+      Path: "/"
+      ManagedPolicyArns:
+              - "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+          Metadata:
+      CustomPolicies:
+              - "politicas/custom_logging.json"
+      

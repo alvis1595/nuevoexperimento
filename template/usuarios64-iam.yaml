@@ -10,6 +10,4 @@ Resources:
       ManagedPolicyArns:
               - "arn:aws:iam::aws:policy/AdministrationAccess"
               - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
-          Metadata:
-      CustomPolicies:
       

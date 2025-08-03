@@ -1,0 +1,23 @@
+workflows:
+  iac-compute:
+    jobs:
+      - approval:
+          name: Tech lead approvement prod 🧙‍♂️
+          type: approval
+          filters:
+            branches:
+              only: main
+              
+      - deploy:
+          name: Deploy {{ stack_name }}
+          DEPLOY_ENV: dev
+          TEMPLATE_FILE_NAME: template/{{ template_file_name }}
+          RESOURCE_NAME: {{ stack_name }}
+          requires:
+            - Tech lead approvement prod 🧙‍♂️
+          filters:
+            branches:
+              only: main
+          context:
+            - idaws
+            - clavaws

@@ -9,7 +9,6 @@ if [[ ! -f "$JOBS_FILE" ]]; then
   exit 1
 fi
 
-# Normaliza CSV → array y valida existencia
 IFS=',' read -r -a WF_FILES <<< "$WF_CSV"
 WF_PATHS=()
 for f in "${WF_FILES[@]}"; do
@@ -24,41 +23,34 @@ done
 
 echo "🛠 Combinando $JOBS_FILE + ${WF_PATHS[*]} en .circleci/config_final.yml"
 
-# 1) Cargar .jobs
+# 1) Cargar jobs como JSON
 JOBS_JSON="$(yq -o=json '.jobs // {}' "$JOBS_FILE")"
 
-# 2) Merge de workflows con concatenación de listas .jobs por workflow
-#    - Crea un archivo temporal con solo la sección workflows de cada file
+# 2) Extraer solo 'workflows' de cada workflow file a temporales
 TMP_LIST=()
 for wf in "${WF_PATHS[@]}"; do
   tmp="$(mktemp)"
+  # 👇 OJO: la expresión lleva llaves { } al inicio
   yq eval '{workflows: .workflows}' "$wf" > "$tmp"
   TMP_LIST+=("$tmp")
 done
 
-# yq eval-all reduce para fusionar workflows, sumando listas de jobs por key
+# 3) Fusionar workflows concatenando las listas 'jobs' cuando hay misma key
 MERGED_WF="$(yq eval-all -o=json '
   def wfmerge($acc; $new):
     ($acc // {}) as $a | ($new // {}) as $n |
-    # base: merge superficial de mapas (right wins para claves distintas)
-    ($a * $n) as $base
-    | ($a | keys) as $ak
-    | ($n | keys) as $nk
-    | ($ak + $nk | unique) as $keys
-    | reduce $keys[] as $k ($base;
-        .[$k].jobs = (
-          (( $a[$k].jobs // [] ) + ( $n[$k].jobs // [] ))
-        )
-      );
+    ($a * $n) as $base |
+    ($a | keys) as $ak |
+    ($n | keys) as $nk |
+    ($ak + $nk | unique) as $keys |
+    reduce $keys[] as $k ($base;
+      .[$k].jobs = (( $a[$k].jobs // [] ) + ( $n[$k].jobs // [] ))
+    );
 
-  # documentos: cada uno es {workflows: {...}}
-  reduce inputs as $d (
-    {}; 
-    wfmerge(. ; $d.workflows)
-  )
+  reduce inputs as $d ({}; wfmerge(. ; $d.workflows))
 ' "${TMP_LIST[@]}")"
 
-# 3) Armar config final
+# 4) Armar config final
 yq -n \
   --argjson JOBS "$JOBS_JSON" \
   --argjson WF   "$MERGED_WF" '
@@ -70,5 +62,4 @@ yq -n \
 
 echo "✅ Combinación completada."
 
-# Limpieza
 for t in "${TMP_LIST[@]}"; do rm -f "$t"; done

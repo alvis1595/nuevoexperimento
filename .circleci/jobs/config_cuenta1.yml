@@ -41,6 +41,11 @@ jobs:
             ./scripts/install_aws.sh <<parameters.DEPLOY_ENV>> <<pipeline.number>>
       - run: chmod +x ./scripts/*
       - run:
+          name: Debug params
+          command: |
+            echo "jobs_file=<< pipeline.parameters.jobs_file >>"
+            echo "workflow_files_csv=<< pipeline.parameters.workflow_files_csv >>"
+      - run:
           name: Deploying <<parameters.RESOURCE_NAME>> 🎯
           command: ./scripts/deploy.sh <<parameters.TEMPLATE_FILE_NAME>> <<parameters.RESOURCE_NAME>>
           no_output_timeout: 40m

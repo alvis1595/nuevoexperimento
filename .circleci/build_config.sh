@@ -27,49 +27,46 @@ done
 
 echo "🛠 Combinando $JOBS_FILE + ${WF_PATHS[*]} en .circleci/config_final.yml"
 
-# 1) Cargar jobs
-JOBS_JSON="$($YQ -o=json '.jobs // {}' "$JOBS_FILE")"
+# 1) Cargar jobs en JSON
+JOBS_JSON="$($YQ eval -o=json '.jobs // {}' "$JOBS_FILE")"
 
-# 2) Extraer y NORMALIZAR 'workflows' de cada archivo
-#    - Si workflows es seq (lista), lo convertimos en map reduciendo ítems
+# 2) Extraer y NORMALIZAR 'workflows' de cada archivo (seq -> map)
 TMP_LIST=()
 for wf in "${WF_PATHS[@]}"; do
   tmp="$(mktemp)"
-  $YQ -o=json '
-    def norm_wf:
-      if . == null then {}                      # sin workflows → {}
-      elif type == "!!map" then .               # ya es mapa → OK
-      elif type == "!!seq" then                 # lista → combinar en mapa
-        reduce .[] as $i ({}; . * $i)
-      else {} end;
-
-    {"workflows": (.workflows | norm_wf)}
+  $YQ eval -o=json '
+    .workflows as $w
+    | {"workflows":
+        ( if $w == null then {}
+          elif ($w | type) == "!!map" then $w
+          elif ($w | type) == "!!seq" then reduce $w[] as $i ({}; . * $i)
+          else {} end )
+      }
   ' "$wf" > "$tmp"
   TMP_LIST+=("$tmp")
 done
 
-# 3) Fusionar workflows concatenando listas 'jobs' por nombre de workflow
+# 3) Fusionar workflows concatenando listas .jobs por cada workflow
 MERGED_WF="$($YQ eval-all -o=json '
   def wfmerge($acc; $new):
     ($acc // {}) as $a | ($new // {}) as $n |
-    # base merge superficial (right-wins para metadatos no .jobs)
-    ($a * $n) as $base |
-    ($a.workflows // {}) as $aw |
-    ($n.workflows // {}) as $nw |
-    ($aw | keys) as $ak |
-    ($nw | keys) as $nk |
-    ($ak + $nk | unique) as $keys |
-    reduce $keys[] as $k (
-      {workflows: ($base.workflows // {} )};
-      .workflows[$k].jobs =
-        (( $aw[$k].jobs // [] ) + ( $nw[$k].jobs // [] ))
-    );
+    # merge superficial base (sin tocar .jobs todavía)
+    ($a * $n) as $base
+    | ($a.workflows // {}) as $aw
+    | ($n.workflows // {}) as $nw
+    | ($aw | keys) as $ak
+    | ($nw | keys) as $nk
+    | ($ak + $nk | unique) as $keys
+    | reduce $keys[] as $k (
+        {workflows: ($base.workflows // {})};
+        .workflows[$k].jobs = (( $aw[$k].jobs // [] ) + ( $nw[$k].jobs // [] ))
+      );
 
   reduce inputs as $d ({}; wfmerge(. ; $d))
 ' "${TMP_LIST[@]}")"
 
-# 4) Armar config final (para continuation: sin setup:true)
-$YQ -n \
+# 4) Armar config final (continuation no admite setup:true)
+$YQ eval -n \
   --argjson JOBS "$JOBS_JSON" \
   --argjson WF   "$MERGED_WF" '
   .version = "2.1" |

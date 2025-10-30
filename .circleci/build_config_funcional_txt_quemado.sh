@@ -1,7 +1,8 @@
 #!/bin/bash
 # build_config.sh
-# Combina 1 archivo de jobs (jobs + executors) con N archivos de workflows.
-# Admite workflow_files_csv como CSV ("a.yaml,b.yaml") o JSON (["a.yaml","b.yaml"])
+# Combina 1 archivo de jobs (incluye jobs + executors)
+# con N archivos de workflows (concatena listas de jobs por workflow).
+# Requiere yq v4.
 set -Eeuo pipefail
 trap 'echo -e "\n💥 Falló en la línea $LINENO (cmd: $BASH_COMMAND)\n"' ERR
 
@@ -9,24 +10,14 @@ YQ="${YQ_PATH:-$HOME/bin/yq}"
 echo "Using yq at: $YQ"
 $YQ --version
 
-JOBS_FILE=".circleci/jobs/${1:-}"
-WF_INPUT="${2:-}"
+JOBS_FILE=".circleci/jobs/${1}"
+WF_CSV="${2}"
 
-[[ -n "$JOBS_FILE" ]] || { echo "❌ Falta arg1: jobs_file"; exit 1; }
-[[ -n "$WF_INPUT"  ]] || { echo "❌ Falta arg2: workflow_files_csv (CSV o JSON)"; exit 1; }
 [[ -f "$JOBS_FILE" ]] || { echo "❌ No existe $JOBS_FILE"; exit 1; }
+[[ -n "$WF_CSV"    ]] || { echo "❌ CSV de workflows vacío"; exit 1; }
 
-# --- Parsear workflows: JSON array o CSV ---
-WF_FILES=()
-if [[ "$WF_INPUT" =~ ^[[:space:]]*\[ ]]; then
-  # JSON
-  mapfile -t WF_FILES < <(printf '%s' "$WF_INPUT" | "$YQ" -p=json -r e '.[]' -)
-else
-  # CSV
-  IFS=',' read -r -a WF_FILES <<< "$WF_INPUT"
-fi
-
-# Normalizar rutas y validar existencia
+# Normaliza CSV de workflows a rutas
+IFS=',' read -r -a WF_FILES <<< "$WF_CSV"
 WF_PATHS=()
 for f in "${WF_FILES[@]}"; do
   wf=".circleci/workflows/$(echo "$f" | xargs)"
@@ -37,28 +28,37 @@ done
 echo "🛠 Combinando $JOBS_FILE + ${WF_PATHS[*]} en .circleci/config_final.yml"
 
 # Validar YAMLs de entrada
-"$YQ" e '.' "$JOBS_FILE" >/dev/null
-for wf in "${WF_PATHS[@]}"; do "$YQ" e '.' "$wf" >/dev/null; done
+$YQ e '.' "$JOBS_FILE" >/dev/null
+for wf in "${WF_PATHS[@]}"; do $YQ e '.' "$wf" >/dev/null; done
 
 # --- 1) Extraer jobs y executors del archivo de jobs ---
-JOBS_TMP="$(mktemp)";     "$YQ" e -o=json '.jobs // {}'      "$JOBS_FILE" > "$JOBS_TMP"
-EXECS_TMP="$(mktemp)";     "$YQ" e -o=json '.executors // {}' "$JOBS_FILE" > "$EXECS_TMP"
+JOBS_TMP="$(mktemp)"
+$YQ e -o=json '.jobs // {}' "$JOBS_FILE" > "$JOBS_TMP"
+
+EXECS_TMP="$(mktemp)"
+$YQ e -o=json '.executors // {}' "$JOBS_FILE" > "$EXECS_TMP"
 
 # --- 2) Acumulador de workflows (JSON) ---
-ACC="$(mktemp)"; echo '{}' | "$YQ" e '.' -o=json - > "$ACC"
+ACC="$(mktemp)"
+echo '{}' | $YQ e '.' -o=json - > "$ACC"
 
 # --- 3) Por cada workflow file: extrae mapa .workflows y concatena .jobs por nombre ---
 for wf in "${WF_PATHS[@]}"; do
   WF_MAP_TMP="$(mktemp)"
-  "$YQ" e -o=json '.workflows // {}' "$wf" > "$WF_MAP_TMP"
+  # Debe ser un MAPA: { <workflow_name>: { jobs:[...] }, ... }
+  $YQ e -o=json '.workflows // {}' "$wf" > "$WF_MAP_TMP"
 
-  mapfile -t NAMES < <("$YQ" -r e 'keys | .[]' "$WF_MAP_TMP" || true)
+  # Obtener nombres de workflows en este archivo
+  mapfile -t NAMES < <($YQ e -o=json 'keys | .[]' "$WF_MAP_TMP" | sed 's/"//g' || true)
+
   for NAME in "${NAMES[@]}"; do
+    # Jobs de ESTE workflow en ESTE archivo -> tmp
     JOBS_CUR_TMP="$(mktemp)"
-    NAME="$NAME" "$YQ" e -o=json '.[strenv(NAME)].jobs // []' "$WF_MAP_TMP" > "$JOBS_CUR_TMP"
+    NAME="$NAME" $YQ e -o=json '.[strenv(NAME)].jobs // []' "$WF_MAP_TMP" > "$JOBS_CUR_TMP"
 
+    # Concatena en el acumulador: ACC.workflows[NAME].jobs += JOBS_CUR
     NAME="$NAME" JOBS_CUR_TMP="$JOBS_CUR_TMP" \
-    "$YQ" e -i '
+    $YQ e -i '
       .workflows[strenv(NAME)].jobs =
         (( .workflows[strenv(NAME)].jobs // [] ) + ( load(env(JOBS_CUR_TMP)) // [] ))
     ' "$ACC"
@@ -69,7 +69,7 @@ for wf in "${WF_PATHS[@]}"; do
 done
 
 # --- 4) Armar config final (continuation no admite setup:true) ---
-JOBS_TMP="$JOBS_TMP" EXECS_TMP="$EXECS_TMP" ACC="$ACC" "$YQ" e -n '
+JOBS_TMP="$JOBS_TMP" EXECS_TMP="$EXECS_TMP" ACC="$ACC" $YQ e -n '
   .version = "2.1" |
   .setup = false |
   .jobs = load(env(JOBS_TMP)) |
@@ -79,4 +79,6 @@ JOBS_TMP="$JOBS_TMP" EXECS_TMP="$EXECS_TMP" ACC="$ACC" "$YQ" e -n '
 
 echo "✅ Config final generada: .circleci/config_final.yml"
 head -n 80 .circleci/config_final.yml || true
-"$YQ" e '.' .circleci/config_final.yml >/dev/null
+
+# Validar salida
+$YQ e '.' .circleci/config_final.yml >/dev/null

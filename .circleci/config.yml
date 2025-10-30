@@ -43,6 +43,8 @@ jobs:
       - run:
           name: Debug params
           command: |
+            echo "CIRCLE_PIPELINE_PARAMETERS:"
+            echo "$CIRCLE_PIPELINE_PARAMETERS"
             echo "jobs_file=<< pipeline.parameters.jobs_file >>"
             echo "workflow_files_csv=<< pipeline.parameters.workflow_files_csv >>"
       - run:

@@ -41,6 +41,11 @@ jobs:
             source $BASH_ENV
             yq --version
       - run:
+          name: Debug params
+          command: |
+            echo "jobs_file=<< pipeline.parameters.jobs_file >>"
+            echo "workflow_files_csv=<< pipeline.parameters.workflow_files_csv >>"
+      - run:
           name: Combinar jobs + workflows seleccionados
           command: |
             bash .circleci/build_config.sh "<< parameters.jobs_file >>" "<< parameters.workflow_files_csv >>"

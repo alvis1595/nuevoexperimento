@@ -27,45 +27,32 @@ done
 
 echo "🛠 Combinando $JOBS_FILE + ${WF_PATHS[*]} en .circleci/config_final.yml"
 
-# 1) Cargar jobs en JSON
+# 1) Carga jobs como JSON
 JOBS_JSON="$($YQ eval -o=json '.jobs // {}' "$JOBS_FILE")"
 
-# 2) Extraer y NORMALIZAR 'workflows' de cada archivo (seq -> map)
-TMP_LIST=()
-for wf in "${WF_PATHS[@]}"; do
-  tmp="$(mktemp)"
-  $YQ eval -o=json '
-    .workflows as $w
-    | {"workflows":
-        ( if $w == null then {}
-          elif ($w | type) == "!!map" then $w
-          elif ($w | type) == "!!seq" then reduce $w[] as $i ({}; . * $i)
-          else {} end )
-      }
-  ' "$wf" > "$tmp"
-  TMP_LIST+=("$tmp")
+# 2) Extrae todos los nombres de workflows presentes
+WF_NAMES=($($YQ eval -o=json '
+  .workflows | keys[]' "${WF_PATHS[@]}" 2>/dev/null | sed 's/"//g' | sort -u))
+
+# 3) Para cada workflow, concatena sus .jobs en orden de archivos
+TMP="$(mktemp)"
+echo '{}' | $YQ eval '.' - > "$TMP"
+
+for name in "${WF_NAMES[@]}"; do
+  # Junta todas las listas de jobs bajo el mismo workflow
+  JOBS_CONCAT="$($YQ eval -o=json ".workflows.\"$name\".jobs // []" "${WF_PATHS[@]}" \
+    | jq -s 'flatten' 2>/dev/null || echo '[]')"
+
+  # Inyecta ese workflow en el acumulador
+  $YQ eval -i -o=json --arg name "$name" --argjson jobs "$JOBS_CONCAT" '
+    .workflows[$name].jobs = $jobs
+  ' "$TMP"
 done
 
-# 3) Fusionar workflows concatenando listas .jobs por cada workflow
-MERGED_WF="$($YQ eval-all -o=json '
-  def wfmerge($acc; $new):
-    ($acc // {}) as $a | ($new // {}) as $n |
-    # merge superficial base (sin tocar .jobs todavía)
-    ($a * $n) as $base
-    | ($a.workflows // {}) as $aw
-    | ($n.workflows // {}) as $nw
-    | ($aw | keys) as $ak
-    | ($nw | keys) as $nk
-    | ($ak + $nk | unique) as $keys
-    | reduce $keys[] as $k (
-        {workflows: ($base.workflows // {})};
-        .workflows[$k].jobs = (( $aw[$k].jobs // [] ) + ( $nw[$k].jobs // [] ))
-      );
+MERGED_WF="$($YQ eval -o=json '.' "$TMP")"
+rm -f "$TMP"
 
-  reduce inputs as $d ({}; wfmerge(. ; $d))
-' "${TMP_LIST[@]}")"
-
-# 4) Armar config final (continuation no admite setup:true)
+# 4) Arma config final (para continuation: sin setup:true)
 $YQ eval -n \
   --argjson JOBS "$JOBS_JSON" \
   --argjson WF   "$MERGED_WF" '
@@ -76,5 +63,3 @@ $YQ eval -n \
 ' > .circleci/config_final.yml
 
 echo "✅ Combinación completada."
-
-for t in "${TMP_LIST[@]}"; do rm -f "$t"; done

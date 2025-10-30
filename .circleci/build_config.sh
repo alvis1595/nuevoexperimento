@@ -23,46 +23,51 @@ done
 
 echo "🛠 Combinando $JOBS_FILE + ${WF_PATHS[*]} en .circleci/config_final.yml"
 
-# Validar YAMLs
+# Validar YAMLs de entrada
 $YQ e '.' "$JOBS_FILE" >/dev/null
 for wf in "${WF_PATHS[@]}"; do $YQ e '.' "$wf" >/dev/null; done
 
-# 1) Jobs → JSON a archivo temp
+# 1) Guardar .jobs como JSON en archivo temporal
 JOBS_TMP="$(mktemp)"
 $YQ e -o=json '.jobs // {}' "$JOBS_FILE" > "$JOBS_TMP"
 
-# 2) Extraer SOLO .workflows de cada workflow file a temporales (como mapas)
-TMP_LIST=()
+# 2) Acumulador de workflows (JSON)
+ACC="$(mktemp)"
+echo '{}' | $YQ e '.' -o=json - > "$ACC"
+
+# 3) Por cada workflow file: extrae mapa .workflows y concatena .jobs por nombre
 for wf in "${WF_PATHS[@]}"; do
-  t="$(mktemp)"
-  # Debe ser un mapa: { <nombre_workflow>: { jobs: [...] }, ... }
-  $YQ e -o=json '.workflows // {}' "$wf" > "$t"
-  TMP_LIST+=("$t")
+  WF_MAP_TMP="$(mktemp)"
+  # Debe ser un MAPA: { <nombre>: { jobs:[...] }, ... }
+  $YQ e -o=json '.workflows // {}' "$wf" > "$WF_MAP_TMP"
+
+  # Obtener nombres de workflows en este archivo
+  mapfile -t NAMES < <($YQ e -o=json 'keys | .[]' "$WF_MAP_TMP" | sed 's/"//g')
+  for NAME in "${NAMES[@]}"; do
+    # Jobs de ESTE workflow en ESTE archivo -> archivo tmp
+    JOBS_CUR_TMP="$(mktemp)"
+    NAME="$NAME" $YQ e -o=json '.[strenv(NAME)].jobs // []' "$WF_MAP_TMP" > "$JOBS_CUR_TMP"
+
+    # Concatena en el acumulador: ACC.workflows[NAME].jobs += JOBS_CUR
+    NAME="$NAME" JOBS_CUR_TMP="$JOBS_CUR_TMP" \
+    $YQ e -i '
+      .workflows[strenv(NAME)].jobs =
+        (( .workflows[strenv(NAME)].jobs // [] ) + ( load(env(JOBS_CUR_TMP)) // [] ))
+    ' "$ACC"
+
+    rm -f "$JOBS_CUR_TMP"
+  done
+  rm -f "$WF_MAP_TMP"
 done
 
-# 3) Merge de workflows concatenando listas jobs por nombre
-WF_TMP="$(mktemp)"
-$YQ eval-all -o=json '
-  # Cada input es un mapa con uno o más workflows
-  reduce inputs as $d ({}; 
-    . as $acc |
-    ($d | to_entries) as $entries |
-    reduce $entries[] as $e ($acc;
-      .[$e.key].jobs = (( .[$e.key].jobs // [] ) + ( $e.value.jobs // [] ))
-    )
-  )
-' "${TMP_LIST[@]}" > "$WF_TMP"
-
-# 4) Armar config_final.yml cargando desde archivos (sin --argjson)
-JOBS_TMP="$JOBS_TMP" WF_TMP="$WF_TMP" $YQ eval -n '
+# 4) Armar config final (sin setup:true para continuation)
+JOBS_TMP="$JOBS_TMP" ACC="$ACC" $YQ e -n '
   .version = "2.1" |
   .setup = false |
   .jobs = load(env(JOBS_TMP)) |
-  .workflows = load(env(WF_TMP))
+  .workflows = load(env(ACC)).workflows
 ' > .circleci/config_final.yml
 
 echo "✅ Config final generada: .circleci/config_final.yml"
-head -n 60 .circleci/config_final.yml || true
-
-# Validar salida
+head -n 80 .circleci/config_final.yml || true
 $YQ e '.' .circleci/config_final.yml >/dev/null

@@ -1,5 +1,4 @@
 version: 2.1
-
 setup: true
 
 orbs:
@@ -9,18 +8,17 @@ parameters:
   jobs_file:
     type: string
     default: config_cuenta1.yml
-  workflow_file:
+  workflow_files_csv:
     type: string
-    default: usuarios63-iam.yaml
-
+    # Ejemplo: "aprovee.yaml,usuarios63-iam.yaml,otro.yaml"
+    default: "approve.yaml,usuarios63-iam.yaml"
 
 workflows:
   setup:
     jobs:
       - trigger_pipeline:
           jobs_file: << pipeline.parameters.jobs_file >>
-          workflow_file: << pipeline.parameters.workflow_file >>
-          
+          workflow_files_csv: << pipeline.parameters.workflow_files_csv >>
 
 jobs:
   trigger_pipeline:
@@ -29,7 +27,7 @@ jobs:
     parameters:
       jobs_file:
         type: string
-      workflow_file:
+      workflow_files_csv:
         type: string
     steps:
       - checkout
@@ -44,14 +42,8 @@ jobs:
             source $BASH_ENV
             yq --version
       - run:
-          name: ✅ Usar yq para probar
+          name: Combinar jobs + workflows seleccionados
           command: |
-            echo 'foo: bar' > test.yml
-            yq '.foo' test.yml
-      - run:
-          name: Combinar jobs + workflow seleccionado
-          command: |
-            bash .circleci/build_config.sh << parameters.jobs_file >> << parameters.workflow_file >>
+            bash .circleci/build_config.sh "<< parameters.jobs_file >>" "<< parameters.workflow_files_csv >>"
       - continuation/continue:
           configuration_path: .circleci/config_final.yml
- 

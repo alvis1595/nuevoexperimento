@@ -10,7 +10,7 @@ parameters:
     default: config_cuenta1.yml
   workflow_files_csv:
     type: string
-    # Ejemplo: "aprovee.yaml,usuarios63-iam.yaml,otro.yaml"
+    # ejemplo: "approve.yaml,usuarios63-iam.yaml"
     default: "approve.yaml,usuarios63-iam.yaml"
 
 workflows:

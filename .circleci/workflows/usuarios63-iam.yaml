@@ -1,12 +1,12 @@
-workflows:
-  iac-compute:
-    jobs:
-      - approval:
-          name: Tech lead approvement prod 🧙‍♂️
-          type: approval
-          filters:
-            branches:
-              only: main
+#workflows:
+#  iac-compute:
+#    jobs:
+#      - approval:
+#          name: Tech lead approvement prod 🧙‍♂️
+#          type: approval
+#          filters:
+#            branches:
+#              only: main
               
       - deploy:
           name: Deploy usuarios63-iam

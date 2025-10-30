@@ -1,0 +1,9 @@
+workflows:
+  iac-compute:
+    jobs:
+      - approval:
+          name: Tech lead approvement prod 🧙‍♂️
+          type: approval
+          filters:
+            branches:
+              only: main

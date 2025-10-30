@@ -1,3 +1,8 @@
+parameters:
+  workflow_file:
+    type: string
+    default: approve.yaml
+
 workflows:
   iac-compute:
     jobs:

@@ -7,10 +7,12 @@ orbs:
 parameters:
   jobs_file:
     type: string
-    default: config_cuenta1.yml
+#    default: config_cuenta1.yml
+    default: ""
   workflow_files_csv:
     type: string
-    default: "approve.yaml,usuarios63-iam.yaml"
+#    default: "approve.yaml,usuarios63-iam.yaml"
+    default: ""
 
 workflows:
   setup:

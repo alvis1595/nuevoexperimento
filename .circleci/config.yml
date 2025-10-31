@@ -7,18 +7,15 @@ orbs:
 parameters:
   jobs_file:
     type: string
-#    default: config_cuenta1.yml
-    default: ""
+    default: config_cuenta1.yml      # ok vacío; resolvemos en el job
   workflow_files_csv:
     type: string
-#    default: "approve.yaml,usuarios63-iam.yaml"
-    default: ""
+    default: ""      # ok vacío; resolvemos en el job
 
 workflows:
   setup:
     jobs:
-      # 👇 No pases argumentos aquí; léelos dentro del job
-      - trigger_pipeline
+      - trigger_pipeline   # 👈 sin argumentos aquí
 
 jobs:
   trigger_pipeline:
@@ -28,37 +25,68 @@ jobs:
       - checkout
 
       - run:
-          name: Instalar yq
+          name: Instalar yq y jq
           command: |
+            set -e
             mkdir -p ~/bin
             YQ_VERSION=v4.43.1
-            wget https://github.com/mikefarah/yq/releases/download/$YQ_VERSION/yq_linux_amd64 -O ~/bin/yq
+            wget -q https://github.com/mikefarah/yq/releases/download/$YQ_VERSION/yq_linux_amd64 -O ~/bin/yq
             chmod +x ~/bin/yq
             echo 'export PATH="$HOME/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
             yq --version
+            if ! command -v jq >/dev/null 2>&1; then
+              sudo apt-get update -y
+              sudo apt-get install -y jq
+            fi
+            jq --version
 
       - run:
-          name: Resolver parámetros desde CIRCLE_PIPELINE_PARAMETERS
+          name: Resolver parámetros desde UI o archivos locales
           command: |
-            echo "CIRCLE_PIPELINE_PARAMETERS: $CIRCLE_PIPELINE_PARAMETERS"
-            # Lee los parámetros del pipeline (con fallback a defaults del config)
-            JOBS_FILE="$(echo "$CIRCLE_PIPELINE_PARAMETERS" | jq -r '.jobs_file // empty')"
-            WF_CSV="$(echo "$CIRCLE_PIPELINE_PARAMETERS" | jq -r '.workflow_files_csv // empty')"
-            # Fallback a defaults del propio config si vienen vacíos
-            [[ -n "$JOBS_FILE" ]] || JOBS_FILE="<< pipeline.parameters.jobs_file >>"
-            [[ -n "$WF_CSV"   ]] || WF_CSV="<< pipeline.parameters.workflow_files_csv >>"
-            echo "Using jobs_file=$JOBS_FILE"
-            echo "Using workflow_files_csv=$WF_CSV"
-            # Exporta para siguientes pasos
-            echo "export JOBS_FILE=\"$JOBS_FILE\"" >> $BASH_ENV
-            echo "export WF_CSV=\"$WF_CSV\""       >> $BASH_ENV
-            source $BASH_ENV
+            set -euo pipefail
+            echo "CIRCLE_PIPELINE_PARAMETERS: ${CIRCLE_PIPELINE_PARAMETERS:-}"
+
+            # 1) Intentar leer desde UI (pipeline setup)
+            JOBS_FILE="$(echo "${CIRCLE_PIPELINE_PARAMETERS:-}" | jq -r '.jobs_file // empty' 2>/dev/null || true)"
+            WF_INPUT="$(echo "${CIRCLE_PIPELINE_PARAMETERS:-}" | jq -r '.workflow_files_csv // empty' 2>/dev/null || true)"
+
+            # 2) Si workflow_files_csv NO vino por UI: usar archivo JSON o CSV del repo
+            if [[ -z "${WF_INPUT}" ]]; then
+              if [[ -f ".circleci/workflows_list.json" ]]; then
+                echo "📄 Leyendo .circleci/workflows_list.json"
+                WF_INPUT="$(jq -r 'join(",")' .circleci/workflows_list.json)"
+              elif [[ -f ".circleci/workflows_list.csv" ]]; then
+                echo "📄 Leyendo .circleci/workflows_list.csv"
+                WF_INPUT="$(paste -sd, .circleci/workflows_list.csv)"
+              else
+                echo "❌ No se definió 'workflow_files_csv' ni existen .circleci/workflows_list.json/.csv"
+                exit 1
+              fi
+            fi
+
+            # 3) jobs_file: si no vino por UI, usa archivo opcional o default
+            if [[ -z "${JOBS_FILE}" ]]; then
+              if [[ -f ".circleci/jobs_file.txt" ]]; then
+                echo "📄 Leyendo .circleci/jobs_file.txt"
+                JOBS_FILE="$(head -n1 .circleci/jobs_file.txt | xargs)"
+              else
+                JOBS_FILE="config_cuenta1.yml"
+              fi
+            fi
+
+            echo "✅ Usando jobs_file=${JOBS_FILE}"
+            echo "✅ Usando workflow_files_csv=${WF_INPUT}"
+
+            echo "export JOBS_FILE=\"${JOBS_FILE}\"" >> "$BASH_ENV"
+            echo "export WF_INPUT=\"${WF_INPUT}\""   >> "$BASH_ENV"
+            source "$BASH_ENV"
 
       - run:
           name: Combinar jobs + workflows seleccionados
           command: |
-            bash .circleci/build_config.sh "$JOBS_FILE" "$WF_CSV"
+            set -e
+            bash .circleci/build_config.sh "${JOBS_FILE}" "${WF_INPUT}"
 
       - continuation/continue:
           configuration_path: .circleci/config_final.yml
